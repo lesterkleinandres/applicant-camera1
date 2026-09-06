@@ -900,208 +900,112 @@
 
 
   /********************************************************
-   * SAVE PHOTO
-   ********************************************************/
+ * SAVE PHOTO
+ ********************************************************/
 
-  function savePhoto() {
+function savePhoto() {
 
-    if (!capturedImage) {
+  if (!capturedImage) {
 
-      document
-        .getElementById(
-          'status'
-        )
-        .textContent =
-        '❌ Please take a photo first.';
+    document.getElementById('status').className =
+      'status error';
 
-      return;
+    document.getElementById('status').textContent =
+      '❌ Please take a photo first.';
 
-    }
+    return;
+  }
 
 
-    if (!spreadsheetId) {
+  if (!spreadsheetId) {
 
-      document
-        .getElementById(
-          'status'
-        )
-        .className =
-        'status error';
+    document.getElementById('status').className =
+      'status error';
 
-      document
-        .getElementById(
-          'status'
-        )
-        .textContent =
-        '❌ Spreadsheet ID is missing from the URL.';
+    document.getElementById('status').textContent =
+      '❌ Spreadsheet ID is missing from the URL.';
 
-      return;
-
-    }
+    return;
+  }
 
 
-    if (!APPS_SCRIPT_URL) {
+  if (!APPS_SCRIPT_URL) {
 
-  document
-    .getElementById('status')
-    .className =
-    'status error';
+    document.getElementById('status').className =
+      'status error';
 
-  document
-    .getElementById('status')
-    .textContent =
-    '❌ Apps Script connection URL is missing. Please open the camera from the Google Sheet.';
+    document.getElementById('status').textContent =
+      '❌ Apps Script connection URL is missing. Please open the camera from the Google Sheet.';
 
-  return;
-
-}
-
-      document
-        .getElementById(
-          'status'
-        )
-        .className =
-        'status error';
-
-      document
-        .getElementById(
-          'status'
-        )
-        .textContent =
-        '❌ Apps Script Web App URL has not been configured.';
-
-      return;
-
-    }
+    return;
+  }
 
 
-    /*
-     * Disable Save button.
-     */
+  /*
+   * Disable buttons while saving
+   */
 
-    document
-      .getElementById(
-        'saveButton'
-      )
-      .disabled =
-      true;
+  document.getElementById('saveButton').disabled =
+    true;
 
-
-    document
-      .getElementById(
-        'retakeButton'
-      )
-      .disabled =
-      true;
+  document.getElementById('retakeButton').disabled =
+    true;
 
 
-    /*
-     * Show saving message.
-     */
+  /*
+   * Show saving message
+   */
 
-    document
-      .getElementById(
-        'saving'
-      )
-      .style.display =
+  document.getElementById('saving').style.display =
+    'block';
+
+  document.getElementById('status').className =
+    'status info';
+
+  document.getElementById('status').textContent =
+    'Uploading photo to Google Apps Script...';
+
+
+  /*
+   * Put photo into hidden form
+   */
+
+  document.getElementById('base64Data').value =
+    capturedImage;
+
+
+  /*
+   * Submit form to Apps Script
+   */
+
+  document.getElementById('uploadForm').submit();
+
+
+  /*
+   * Wait for Apps Script processing
+   */
+
+  setTimeout(function() {
+
+    document.getElementById('saving').style.display =
+      'none';
+
+    document.getElementById('successBox').style.display =
       'block';
 
+    document.getElementById('status').className =
+      'status success';
 
-    document
-      .getElementById(
-        'status'
-      )
-      .className =
-      'status info';
+    document.getElementById('status').textContent =
+      '✅ Photo submitted successfully.';
 
-    document
-      .getElementById(
-        'status'
-      )
-      .textContent =
-      'Uploading photo to Google Apps Script...';
+    photoSaved = true;
 
+  }, 4000);
 
-    /*
-     * Put photo into hidden form.
-     */
-
-    document
-      .getElementById(
-        'base64Data'
-      )
-      .value =
-      capturedImage;
-
-
-    /*
-     * Submit form to Apps Script.
-     *
-     * We intentionally use a hidden iframe
-     * instead of fetch() because this avoids
-     * cross-origin/CORS problems between
-     * GitHub Pages and Apps Script.
-     */
-
-    document
-      .getElementById(
-        'uploadForm'
-      )
-      .submit();
-
-
-    /*
-     * Apps Script will receive the photo.
-     *
-     * Give it a few seconds before showing
-     * the success message.
-     */
-
-    setTimeout(
-      function() {
-
-        document
-          .getElementById(
-            'saving'
-          )
-          .style.display =
-          'none';
-
-
-        document
-          .getElementById(
-            'successBox'
-          )
-          .style.display =
-          'block';
-
-
-        document
-          .getElementById(
-            'status'
-          )
-          .className =
-          'status success';
-
-        document
-          .getElementById(
-            'status'
-          )
-          .textContent =
-          '✅ Photo submitted successfully.';
-
-
-        photoSaved =
-          true;
-
-      },
-      4000
-    );
-
+}
   
-
-
-  /********************************************************
+    /********************************************************
    * STOP CAMERA
    ********************************************************/
 
