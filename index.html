@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -62,6 +62,7 @@
       height: 100%;
       object-fit: cover;
       display: none;
+      transform: scaleX(-1);
     }
 
     #canvas {
@@ -221,13 +222,11 @@
       margin-bottom: 5px;
     }
 
-    /* Hidden form used to send the photo to Apps Script */
     #uploadForm {
       display: none;
     }
 
     @media (max-width: 600px) {
-
       body {
         padding: 10px;
       }
@@ -292,6 +291,7 @@
   <div class="buttons">
 
     <button
+      type="button"
       id="enableButton"
       class="btn-camera"
       onclick="startCamera()">
@@ -301,6 +301,7 @@
     </button>
 
     <button
+      type="button"
       id="captureButton"
       class="btn-capture"
       onclick="capturePhoto()">
@@ -310,6 +311,7 @@
     </button>
 
     <button
+      type="button"
       id="retakeButton"
       class="btn-retake"
       onclick="retakePhoto()">
@@ -319,6 +321,7 @@
     </button>
 
     <button
+      type="button"
       id="saveButton"
       class="btn-save"
       onclick="savePhoto()">
@@ -328,6 +331,7 @@
     </button>
 
     <button
+      type="button"
       class="btn-cancel"
       onclick="closePage()">
 
@@ -381,9 +385,7 @@
     <ol>
 
       <li>
-        Make sure you are using
-        <b>Google Chrome</b> or
-        <b>Microsoft Edge</b>.
+        Use <b>Google Chrome</b> or <b>Microsoft Edge</b>.
       </li>
 
       <li>
@@ -409,8 +411,7 @@
       </li>
 
       <li>
-        Review the photo and click
-        <b>Save Photo</b>.
+        Review the photo and click <b>Save Photo</b>.
       </li>
 
     </ol>
@@ -420,9 +421,9 @@
 </div>
 
 
-<!-- ===================================================== -->
-<!-- HIDDEN FORM                                            -->
-<!-- ===================================================== -->
+<!-- =====================================================
+     HIDDEN UPLOAD FORM
+     ===================================================== -->
 
 <form
   id="uploadForm"
@@ -460,630 +461,819 @@
 
 <script>
 
-  /********************************************************
-   * CONFIGURATION
-   ********************************************************/
+/* =========================================================
+   CONFIGURATION
+   ========================================================= */
 
-  /*
-   * IMPORTANT:
-   *
-   * Put your CURRENT Apps Script Web App /exec URL here.
-   *
-   * Example:
-   *
-   * https://script.google.com/macros/s/XXXXXXXXXXXX/exec
-   */
+/*
+ * YOUR CURRENT APPS SCRIPT WEB APP
+ */
 
-  const APPS_SCRIPT_URL =
+const APPS_SCRIPT_URL =
   'https://script.google.com/macros/s/AKfycbxrb3vypWQ3OLkkitcJd2a4x0jb7eSQCBZu4JM3ghccQBl-jkvAnASV9GlbBu-MQalw/exec';
 
 
-  /********************************************************
-   * VARIABLES
-   ********************************************************/
+/*
+ * DEFAULT GOOGLE SPREADSHEET
+ *
+ * This is your Applicant Forms spreadsheet.
+ *
+ * If the Google Sheet sends another spreadsheetId
+ * through the URL, that value will be used instead.
+ */
 
-  let stream = null;
-
-  let capturedImage = null;
-
-  let cameraStarted = false;
-
-  let photoSaved = false;
-
-
-  /********************************************************
-   * READ URL PARAMETERS
-   ********************************************************/
-
-  const params =
-    new URLSearchParams(
-      window.location.search
-    );
+const DEFAULT_SPREADSHEET_ID =
+  '1Sxnm9G1QGPTXLYmBqNGIASWlNRrAX74OtAOv0Bet8Y0';
 
 
-  const spreadsheetId =
-    params.get('spreadsheetId') || '';
+/*
+ * DEFAULT SHEET
+ */
+
+const DEFAULT_SHEET_NAME =
+  '01 Information + ID';
 
 
-  const sheetName =
-    params.get('sheetName') ||
-    '01 Information + ID';
+/* =========================================================
+   VARIABLES
+   ========================================================= */
+
+let stream = null;
+
+let capturedImage = null;
+
+let cameraStarted = false;
+
+let photoSaved = false;
 
 
-  const applicantName =
-    params.get('applicantName') ||
-    'Applicant';
+/* =========================================================
+   HTML ELEMENTS
+   ========================================================= */
+
+const video =
+  document.getElementById('video');
+
+const canvas =
+  document.getElementById('canvas');
+
+const preview =
+  document.getElementById('preview');
+
+const placeholder =
+  document.getElementById('placeholder');
+
+const enableButton =
+  document.getElementById('enableButton');
+
+const captureButton =
+  document.getElementById('captureButton');
+
+const retakeButton =
+  document.getElementById('retakeButton');
+
+const saveButton =
+  document.getElementById('saveButton');
+
+const status =
+  document.getElementById('status');
+
+const saving =
+  document.getElementById('saving');
+
+const successBox =
+  document.getElementById('successBox');
 
 
-  /********************************************************
-   * INITIALIZE
-   ********************************************************/
+/* =========================================================
+   READ URL PARAMETERS
+   ========================================================= */
 
-  window.addEventListener(
-    'DOMContentLoaded',
-    function() {
-
-      document
-        .getElementById('applicantName')
-        .textContent =
-        applicantName;
-
-      document
-        .getElementById('spreadsheetId')
-        .value =
-        spreadsheetId;
-
-      document
-        .getElementById('sheetName')
-        .value =
-        sheetName;
-
-      document
-        .getElementById('formApplicantName')
-        .value =
-        applicantName;
-
-      document
-        .getElementById('uploadForm')
-        .action =
-        APPS_SCRIPT_URL;
-
-    }
+const params =
+  new URLSearchParams(
+    window.location.search
   );
 
 
-  /********************************************************
-   * START CAMERA
-   ********************************************************/
+/*
+ * If spreadsheetId exists in the URL,
+ * use it.
+ *
+ * Otherwise use DEFAULT_SPREADSHEET_ID.
+ */
 
-  async function startCamera() {
+const spreadsheetId =
+  params.get('spreadsheetId') ||
+  DEFAULT_SPREADSHEET_ID;
 
-    const status =
-      document.getElementById(
-        'status'
+
+/*
+ * If sheetName exists in URL,
+ * use it.
+ */
+
+const sheetName =
+  params.get('sheetName') ||
+  DEFAULT_SHEET_NAME;
+
+
+/*
+ * Applicant name.
+ */
+
+const applicantName =
+  params.get('applicantName') ||
+  'Applicant';
+
+
+/* =========================================================
+   INITIALIZE PAGE
+   ========================================================= */
+
+window.addEventListener(
+  'DOMContentLoaded',
+  function() {
+
+    document
+      .getElementById('applicantName')
+      .textContent =
+      applicantName;
+
+
+    document
+      .getElementById('spreadsheetId')
+      .value =
+      spreadsheetId;
+
+
+    document
+      .getElementById('sheetName')
+      .value =
+      sheetName;
+
+
+    document
+      .getElementById('formApplicantName')
+      .value =
+      applicantName;
+
+
+    document
+      .getElementById('uploadForm')
+      .action =
+      APPS_SCRIPT_URL;
+
+
+    console.log(
+      'Applicant:',
+      applicantName
+    );
+
+    console.log(
+      'Spreadsheet ID:',
+      spreadsheetId
+    );
+
+    console.log(
+      'Sheet:',
+      sheetName
+    );
+
+  }
+);
+
+
+/* =========================================================
+   START CAMERA
+   ========================================================= */
+
+async function startCamera() {
+
+  try {
+
+    status.className =
+      'status info';
+
+    status.textContent =
+      'Requesting camera access...';
+
+
+    /*
+     * Browser support check.
+     */
+
+    if (
+      !navigator.mediaDevices ||
+      !navigator.mediaDevices.getUserMedia
+    ) {
+
+      throw new Error(
+        'Camera access is not supported by this browser.'
       );
 
-    const video =
-      document.getElementById(
-        'video'
-      );
+    }
 
-    try {
 
-      status.className =
-        'status info';
+    /*
+     * Stop existing camera first.
+     */
+
+    stopCamera();
+
+
+    /*
+     * Request camera.
+     */
+
+    stream =
+      await navigator.mediaDevices.getUserMedia({
+
+        video: {
+          facingMode: 'user',
+          width: {
+            ideal: 1280
+          },
+          height: {
+            ideal: 960
+          }
+        },
+
+        audio: false
+
+      });
+
+
+    /*
+     * Connect stream to video.
+     */
+
+    video.srcObject =
+      stream;
+
+
+    video.style.display =
+      'block';
+
+
+    placeholder.style.display =
+      'none';
+
+
+    preview.style.display =
+      'none';
+
+
+    /*
+     * Button changes.
+     */
+
+    enableButton.style.display =
+      'none';
+
+    captureButton.style.display =
+      'inline-block';
+
+    retakeButton.style.display =
+      'none';
+
+    saveButton.style.display =
+      'none';
+
+
+    cameraStarted =
+      true;
+
+
+    status.className =
+      'status success';
+
+    status.textContent =
+      'Camera is ready. Position the applicant and click "Take Photo".';
+
+
+  }
+
+  catch (error) {
+
+    console.error(
+      'Camera error:',
+      error
+    );
+
+
+    status.className =
+      'status error';
+
+
+    if (
+      error.name ===
+      'NotAllowedError'
+    ) {
 
       status.textContent =
-        'Requesting camera access...';
+        '❌ Camera permission was denied. Please allow camera access and reload the page.';
+
+    }
+
+    else if (
+      error.name ===
+      'NotFoundError'
+    ) {
+
+      status.textContent =
+        '❌ No camera was found on this computer.';
+
+    }
+
+    else if (
+      error.name ===
+      'NotReadableError'
+    ) {
+
+      status.textContent =
+        '❌ The camera is already being used by another application. Close Teams, Zoom, or another camera application.';
+
+    }
+
+    else {
+
+      status.textContent =
+        '❌ Camera could not be started: ' +
+        error.message;
+
+    }
+
+  }
+
+}
 
 
-      /*
-       * Check browser support.
-       */
+/* =========================================================
+   CAPTURE PHOTO
+   ========================================================= */
 
-      if (
-        !navigator.mediaDevices ||
-        !navigator.mediaDevices.getUserMedia
-      ) {
+function capturePhoto() {
 
-        throw new Error(
-          'Camera access is not supported by this browser.'
-        );
+  if (
+    !cameraStarted ||
+    !stream
+  ) {
 
-      }
+    status.className =
+      'status error';
 
+    status.textContent =
+      '❌ Camera is not active. Click Enable Camera first.';
 
-      /*
-       * Request camera.
-       */
+    return;
 
-      stream =
-        await navigator.mediaDevices.getUserMedia({
-
-          video: {
-            facingMode: 'user',
-            width: {
-              ideal: 1280
-            },
-            height: {
-              ideal: 960
-            }
-          },
-
-          audio: false
-
-        });
+  }
 
 
-      video.srcObject =
-        stream;
+  /*
+   * Make sure video has loaded.
+   */
 
-      video.style.display =
+  if (
+    video.videoWidth === 0 ||
+    video.videoHeight === 0
+  ) {
+
+    status.className =
+      'status error';
+
+    status.textContent =
+      '❌ Camera is still starting. Please try again.';
+
+    return;
+
+  }
+
+
+  /*
+   * Set canvas size.
+   */
+
+  canvas.width =
+    video.videoWidth;
+
+  canvas.height =
+    video.videoHeight;
+
+
+  const context =
+    canvas.getContext('2d');
+
+
+  /*
+   * Mirror the photo.
+   */
+
+  context.save();
+
+  context.translate(
+    canvas.width,
+    0
+  );
+
+  context.scale(
+    -1,
+    1
+  );
+
+
+  context.drawImage(
+    video,
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+
+  context.restore();
+
+
+  /*
+   * Convert to JPEG.
+   */
+
+  capturedImage =
+    canvas.toDataURL(
+      'image/jpeg',
+      0.90
+    );
+
+
+  /*
+   * Show captured photo.
+   */
+
+  preview.src =
+    capturedImage;
+
+  preview.style.display =
+    'block';
+
+  video.style.display =
+    'none';
+
+
+  /*
+   * Stop camera.
+   */
+
+  stopCamera();
+
+
+  /*
+   * Change buttons.
+   */
+
+  enableButton.style.display =
+    'none';
+
+  captureButton.style.display =
+    'none';
+
+  retakeButton.style.display =
+    'inline-block';
+
+  saveButton.style.display =
+    'inline-block';
+
+
+  /*
+   * Status.
+   */
+
+  status.className =
+    'status success';
+
+  status.textContent =
+    'Photo captured. Review the photo before saving.';
+
+}
+
+
+/* =========================================================
+   RETAKE PHOTO
+   ========================================================= */
+
+function retakePhoto() {
+
+  capturedImage =
+    null;
+
+  photoSaved =
+    false;
+
+
+  /*
+   * Hide preview.
+   */
+
+  preview.src =
+    '';
+
+  preview.style.display =
+    'none';
+
+
+  /*
+   * Hide buttons.
+   */
+
+  retakeButton.style.display =
+    'none';
+
+  saveButton.style.display =
+    'none';
+
+
+  /*
+   * Start camera again.
+   */
+
+  startCamera();
+
+}
+
+
+/* =========================================================
+   SAVE PHOTO
+   ========================================================= */
+
+function savePhoto() {
+
+  /*
+   * Check captured image.
+   */
+
+  if (!capturedImage) {
+
+    status.className =
+      'status error';
+
+    status.textContent =
+      '❌ Please take a photo first.';
+
+    return;
+
+  }
+
+
+  /*
+   * Check Spreadsheet ID.
+   */
+
+  if (!spreadsheetId) {
+
+    status.className =
+      'status error';
+
+    status.textContent =
+      '❌ Spreadsheet ID is missing.';
+
+    return;
+
+  }
+
+
+  /*
+   * Check Apps Script URL.
+   */
+
+  if (!APPS_SCRIPT_URL) {
+
+    status.className =
+      'status error';
+
+    status.textContent =
+      '❌ Apps Script Web App URL is missing.';
+
+    return;
+
+  }
+
+
+  /*
+   * Disable buttons.
+   */
+
+  saveButton.disabled =
+    true;
+
+  retakeButton.disabled =
+    true;
+
+
+  /*
+   * Show saving.
+   */
+
+  saving.style.display =
+    'block';
+
+
+  status.className =
+    'status info';
+
+  status.textContent =
+    'Uploading photo to Google Drive...';
+
+
+  /*
+   * Put photo into hidden form.
+   */
+
+  document
+    .getElementById('base64Data')
+    .value =
+    capturedImage;
+
+
+  document
+    .getElementById('spreadsheetId')
+    .value =
+    spreadsheetId;
+
+
+  document
+    .getElementById('sheetName')
+    .value =
+    sheetName;
+
+
+  document
+    .getElementById('formApplicantName')
+    .value =
+    applicantName;
+
+
+  /*
+   * Submit form.
+   *
+   * Hidden iframe prevents the page from
+   * leaving GitHub Pages.
+   */
+
+  const form =
+    document.getElementById('uploadForm');
+
+
+  form.action =
+    APPS_SCRIPT_URL;
+
+
+  form.submit();
+
+
+  /*
+   * Wait for Apps Script to process.
+   */
+
+  setTimeout(
+    function() {
+
+      saving.style.display =
+        'none';
+
+
+      successBox.style.display =
         'block';
-
-      document
-        .getElementById(
-          'placeholder'
-        )
-        .style.display =
-        'none';
-
-
-      document
-        .getElementById(
-          'enableButton'
-        )
-        .style.display =
-        'none';
-
-
-      document
-        .getElementById(
-          'captureButton'
-        )
-        .style.display =
-        'inline-block';
 
 
       status.className =
         'status success';
 
       status.textContent =
-        'Camera is ready. Position the applicant and click "Take Photo".';
+        '✅ Photo submitted successfully.';
 
 
-      cameraStarted =
+      photoSaved =
         true;
 
-    }
 
-    catch (error) {
-
-      console.error(
-        'Camera error:',
-        error
-      );
-
-      status.className =
-        'status error';
-
-
-      if (
-        error.name ===
-        'NotAllowedError'
-      ) {
-
-        status.textContent =
-          '❌ Camera permission was denied. Please allow camera access for this GitHub page, then reload the page.';
-
-      }
-
-      else if (
-        error.name ===
-        'NotFoundError'
-      ) {
-
-        status.textContent =
-          '❌ No camera was found on this computer.';
-
-      }
-
-      else if (
-        error.name ===
-        'NotReadableError'
-      ) {
-
-        status.textContent =
-          '❌ The camera is already being used by another application. Close Teams, Zoom, or another camera application.';
-
-      }
-
-      else {
-
-        status.textContent =
-          '❌ Camera could not be started: ' +
-          error.message;
-
-      }
-
-    }
-
-  }
-
-
-  /********************************************************
-   * CAPTURE PHOTO
-   ********************************************************/
-
-  function capturePhoto() {
-
-    if (
-      !cameraStarted ||
-      !stream
-    ) {
-
-      return;
-
-    }
-
-
-    const video =
-      document.getElementById(
-        'video'
-      );
-
-    const canvas =
-      document.getElementById(
-        'canvas'
-      );
-
-    const preview =
-      document.getElementById(
-        'preview'
-      );
-
-
-    /*
-     * Use video dimensions.
-     */
-
-    canvas.width =
-      video.videoWidth;
-
-    canvas.height =
-      video.videoHeight;
-
-
-    const context =
-      canvas.getContext(
-        '2d'
-      );
-
-
-    /*
-     * Mirror image so it looks
-     * natural for the applicant.
-     */
-
-    context.save();
-
-    context.translate(
-      canvas.width,
-      0
-    );
-
-    context.scale(
-      -1,
-      1
-    );
-
-    context.drawImage(
-      video,
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
-
-    context.restore();
-
-
-    /*
-     * Convert to JPEG.
-     */
-
-    capturedImage =
-      canvas.toDataURL(
-        'image/jpeg',
-        0.90
-      );
-
-
-    /*
-     * Show preview.
-     */
-
-    preview.src =
-      capturedImage;
-
-    preview.style.display =
-      'block';
-
-    video.style.display =
-      'none';
-
-
-    /*
-     * Stop camera temporarily.
-     */
-
-    stopCamera();
-
-
-    /*
-     * Change buttons.
-     */
-
-    document
-      .getElementById(
-        'captureButton'
-      )
-      .style.display =
-      'none';
-
-    document
-      .getElementById(
-        'retakeButton'
-      )
-      .style.display =
-      'inline-block';
-
-    document
-      .getElementById(
-        'saveButton'
-      )
-      .style.display =
-      'inline-block';
-
-
-    const status =
-      document.getElementById(
-        'status'
-      );
-
-    status.className =
-      'status success';
-
-    status.textContent =
-      'Photo captured. Review the photo before saving.';
-
-  }
-
-
-  /********************************************************
-   * RETAKE PHOTO
-   ********************************************************/
-
-  function retakePhoto() {
-
-    capturedImage =
-      null;
-
-
-    document
-      .getElementById(
-        'preview'
-      )
-      .style.display =
-      'none';
-
-
-    document
-      .getElementById(
-        'retakeButton'
-      )
-      .style.display =
-      'none';
-
-
-    document
-      .getElementById(
-        'saveButton'
-      )
-      .style.display =
-      'none';
-
-
-    startCamera();
-
-  }
-
-
-  /********************************************************
- * SAVE PHOTO
- ********************************************************/
-
-function savePhoto() {
-
-  if (!capturedImage) {
-
-    document.getElementById('status').className =
-      'status error';
-
-    document.getElementById('status').textContent =
-      '❌ Please take a photo first.';
-
-    return;
-  }
-
-
-  if (!spreadsheetId) {
-
-    document.getElementById('status').className =
-      'status error';
-
-    document.getElementById('status').textContent =
-      '❌ Spreadsheet ID is missing from the URL.';
-
-    return;
-  }
-
-
-  if (!APPS_SCRIPT_URL) {
-
-    document.getElementById('status').className =
-      'status error';
-
-    document.getElementById('status').textContent =
-      '❌ Apps Script connection URL is missing. Please open the camera from the Google Sheet.';
-
-    return;
-  }
-
-
-  /*
-   * Disable buttons while saving
-   */
-
-  document.getElementById('saveButton').disabled =
-    true;
-
-  document.getElementById('retakeButton').disabled =
-    true;
-
-
-  /*
-   * Show saving message
-   */
-
-  document.getElementById('saving').style.display =
-    'block';
-
-  document.getElementById('status').className =
-    'status info';
-
-  document.getElementById('status').textContent =
-    'Uploading photo to Google Apps Script...';
-
-
-  /*
-   * Put photo into hidden form
-   */
-
-  document.getElementById('base64Data').value =
-    capturedImage;
-
-
-  /*
-   * Submit form to Apps Script
-   */
-
-  document.getElementById('uploadForm').submit();
-
-
-  /*
-   * Wait for Apps Script processing
-   */
-
-  setTimeout(function() {
-
-    document.getElementById('saving').style.display =
-      'none';
-
-    document.getElementById('successBox').style.display =
-      'block';
-
-    document.getElementById('status').className =
-      'status success';
-
-    document.getElementById('status').textContent =
-      '✅ Photo submitted successfully.';
-
-    photoSaved = true;
-
-  }, 4000);
+    },
+    5000
+  );
 
 }
-  
-    /********************************************************
-   * STOP CAMERA
-   ********************************************************/
-
-  function stopCamera() {
-
-    if (!stream) {
-
-      return;
-
-    }
 
 
-    stream
-      .getTracks()
-      .forEach(
-        function(track) {
+/* =========================================================
+   STOP CAMERA
+   ========================================================= */
 
-          track.stop();
+function stopCamera() {
 
-        }
-      );
-
-
-    stream =
-      null;
+  if (!stream) {
 
     cameraStarted =
       false;
 
+    return;
+
   }
 
 
-  /********************************************************
-   * CLOSE PAGE
-   ********************************************************/
+  stream
+    .getTracks()
+    .forEach(
+      function(track) {
 
-  function closePage() {
+        track.stop();
 
-    stopCamera();
-
-
-    /*
-     * If this page was opened as a new tab,
-     * try to close it.
-     */
-
-    window.close();
+      }
+    );
 
 
-    /*
-     * If Chrome does not allow window.close(),
-     * go back.
-     */
+  stream =
+    null;
 
-    setTimeout(
-      function() {
+  cameraStarted =
+    false;
 
-        window.history.back();
 
-      },
-      300
+  /*
+   * Disconnect video.
+   */
+
+  try {
+
+    video.srcObject =
+      null;
+
+  }
+
+  catch (error) {
+
+    console.log(
+      'Video cleanup:',
+      error
     );
 
   }
 
+}
 
-  /********************************************************
-   * PAGE EXIT
-   ********************************************************/
 
-  window.addEventListener(
-    'beforeunload',
+/* =========================================================
+   CANCEL / CLOSE
+   ========================================================= */
+
+function closePage() {
+
+  /*
+   * Stop camera.
+   */
+
+  stopCamera();
+
+
+  /*
+   * Try closing the tab.
+   */
+
+  window.close();
+
+
+  /*
+   * If browser prevents closing,
+   * return to previous page.
+   */
+
+  setTimeout(
     function() {
 
-      stopCamera();
+      if (
+        window.history.length > 1
+      ) {
 
-    }
+        window.history.back();
+
+      }
+
+    },
+    300
   );
+
+}
+
+
+/* =========================================================
+   PAGE EXIT
+   ========================================================= */
+
+window.addEventListener(
+  'beforeunload',
+  function() {
+
+    stopCamera();
+
+  }
+);
 
 </script>
 
