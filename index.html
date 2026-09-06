@@ -941,12 +941,21 @@
     }
 
 
-    if (
-      !APPS_SCRIPT_URL ||
-      APPS_SCRIPT_URL.indexOf(
-        'PASTE_YOUR'
-      ) === 0
-    ) {
+    if (!APPS_SCRIPT_URL) {
+
+  document
+    .getElementById('status')
+    .className =
+    'status error';
+
+  document
+    .getElementById('status')
+    .textContent =
+    '❌ Apps Script connection URL is missing. Please open the camera from the Google Sheet.';
+
+  return;
+
+}
 
       document
         .getElementById(
