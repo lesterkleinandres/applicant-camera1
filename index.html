@@ -475,7 +475,8 @@
    */
 
   const APPS_SCRIPT_URL =
-    'PASTE_YOUR_CURRENT_APPS_SCRIPT_WEB_APP_URL_HERE';
+  new URLSearchParams(window.location.search)
+    .get('appsScriptUrl') || '';
 
 
   /********************************************************
