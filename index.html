@@ -1,454 +1,437 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Applicant Photo Capture</title>
+<title>Applicant Photo Capture</title>
 
-  <style>
-    * {
-      box-sizing: border-box;
-    }
+<style>
 
-    body {
-      margin: 0;
-      padding: 30px 15px;
-      background: #f4f7f9;
-      font-family: Arial, Helvetica, sans-serif;
-      color: #333;
-    }
+* {
+  box-sizing: border-box;
+}
 
-    .container {
-      max-width: 850px;
-      margin: auto;
-      background: white;
-      border-radius: 18px;
-      padding: 35px;
-      box-shadow: 0 5px 25px rgba(0,0,0,0.12);
-    }
+body {
+  margin: 0;
+  padding: 25px 15px;
+  background: #f4f7f9;
+  font-family: Arial, Helvetica, sans-serif;
+  color: #333;
+}
 
-    h1 {
-      text-align: center;
-      color: #174a7e;
-      margin: 0 0 8px;
-      font-size: 34px;
-    }
+.container {
+  max-width: 850px;
+  margin: auto;
+  background: white;
+  border-radius: 18px;
+  padding: 30px;
+  box-shadow: 0 5px 25px rgba(0,0,0,0.12);
+}
 
-    .applicant {
-      text-align: center;
-      font-size: 18px;
-      margin-bottom: 25px;
-    }
+h1 {
+  text-align: center;
+  color: #174a7e;
+  margin: 0 0 8px;
+  font-size: 32px;
+}
 
-    .applicant strong {
-      color: #174a7e;
-    }
+.applicant {
+  text-align: center;
+  font-size: 18px;
+  margin-bottom: 22px;
+}
 
-    .camera-box {
-      width: 100%;
-      aspect-ratio: 4 / 3;
-      background: #000;
-      border-radius: 14px;
-      overflow: hidden;
-      position: relative;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
+.applicant strong {
+  color: #174a7e;
+}
 
-    #video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: none;
-      transform: scaleX(-1);
-    }
+.camera-box {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: #000;
+  border-radius: 14px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
-    #canvas {
-      display: none;
-    }
+#video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: none;
+  transform: scaleX(-1);
+}
 
-    .camera-placeholder {
-      color: #ddd;
-      text-align: center;
-      font-size: 20px;
-    }
+#preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: none;
+}
 
-    .camera-placeholder .icon {
-      display: block;
-      font-size: 50px;
-      margin-bottom: 10px;
-    }
+#canvas {
+  display: none;
+}
 
-    .preview {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: none;
-    }
+.camera-placeholder {
+  color: #ddd;
+  text-align: center;
+  font-size: 20px;
+}
 
-    .buttons {
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      margin-top: 25px;
-      flex-wrap: wrap;
-    }
+.camera-placeholder .icon {
+  display: block;
+  font-size: 50px;
+  margin-bottom: 10px;
+}
 
-    button {
-      border: none;
-      border-radius: 9px;
-      padding: 15px 30px;
-      font-size: 17px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: 0.2s;
-    }
+.buttons {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 22px;
+  flex-wrap: wrap;
+}
 
-    button:hover {
-      transform: translateY(-1px);
-    }
+button {
+  border: none;
+  border-radius: 9px;
+  padding: 14px 25px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.15s;
+}
 
-    button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
-    }
+button:hover {
+  transform: translateY(-1px);
+}
 
-    .btn-camera {
-      background: #1a73e8;
-      color: white;
-    }
+button:active {
+  transform: translateY(1px);
+}
 
-    .btn-capture {
-      background: #188038;
-      color: white;
-      display: none;
-    }
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
 
-    .btn-retake {
-      background: #f9ab00;
-      color: white;
-      display: none;
-    }
+.btn-camera {
+  background: #1a73e8;
+  color: white;
+}
 
-    .btn-save {
-      background: #137333;
-      color: white;
-      display: none;
-    }
+.btn-capture {
+  background: #188038;
+  color: white;
+}
 
-    .btn-cancel {
-      background: #d93025;
-      color: white;
-    }
+.btn-retake {
+  background: #f9ab00;
+  color: white;
+}
 
-    .status {
-      text-align: center;
-      margin-top: 20px;
-      font-size: 16px;
-      min-height: 25px;
-    }
+.btn-save {
+  background: #137333;
+  color: white;
+}
 
-    .status.success {
-      color: #188038;
-      font-weight: bold;
-    }
+.btn-cancel {
+  background: #d93025;
+  color: white;
+}
 
-    .status.error {
-      color: #d93025;
-      font-weight: bold;
-    }
+.hidden {
+  display: none !important;
+}
 
-    .status.info {
-      color: #555;
-    }
+.status {
+  text-align: center;
+  margin-top: 18px;
+  font-size: 16px;
+  min-height: 24px;
+}
 
-    .instructions {
-      margin-top: 25px;
-      padding: 20px;
-      background: #fff8e1;
-      border: 1px solid #f6c453;
-      border-radius: 10px;
-      line-height: 1.6;
-    }
+.status.info {
+  color: #555;
+}
 
-    .instructions strong {
-      display: block;
-      margin-bottom: 8px;
-      color: #8a5700;
-      font-size: 17px;
-    }
+.status.success {
+  color: #188038;
+  font-weight: bold;
+}
 
-    .saving {
-      display: none;
-      text-align: center;
-      margin-top: 20px;
-    }
+.status.error {
+  color: #d93025;
+  font-weight: bold;
+}
 
-    .spinner {
-      display: inline-block;
-      width: 25px;
-      height: 25px;
-      border: 4px solid #ddd;
-      border-top: 4px solid #1a73e8;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      vertical-align: middle;
-      margin-right: 8px;
-    }
+.saving {
+  display: none;
+  text-align: center;
+  margin-top: 18px;
+}
 
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
+.spinner {
+  display: inline-block;
+  width: 23px;
+  height: 23px;
+  border: 4px solid #ddd;
+  border-top: 4px solid #1a73e8;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  vertical-align: middle;
+  margin-right: 8px;
+}
 
-    .success-box {
-      display: none;
-      margin-top: 20px;
-      padding: 18px;
-      background: #e6f4ea;
-      border: 1px solid #34a853;
-      border-radius: 10px;
-      text-align: center;
-      color: #137333;
-    }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
-    .success-box strong {
-      display: block;
-      font-size: 19px;
-      margin-bottom: 5px;
-    }
+.success-box {
+  display: none;
+  margin-top: 18px;
+  padding: 18px;
+  background: #e6f4ea;
+  border: 1px solid #34a853;
+  border-radius: 10px;
+  text-align: center;
+  color: #137333;
+}
 
-    #uploadForm {
-      display: none;
-    }
+.success-box strong {
+  display: block;
+  font-size: 19px;
+  margin-bottom: 5px;
+}
 
-    @media (max-width: 600px) {
-      body {
-        padding: 10px;
-      }
+.instructions {
+  margin-top: 22px;
+  padding: 18px;
+  background: #fff8e1;
+  border: 1px solid #f6c453;
+  border-radius: 10px;
+  line-height: 1.6;
+}
 
-      .container {
-        padding: 20px;
-      }
+.instructions strong {
+  display: block;
+  margin-bottom: 8px;
+  color: #8a5700;
+}
 
-      h1 {
-        font-size: 27px;
-      }
+#uploadForm {
+  display: none;
+}
 
-      button {
-        width: 100%;
-      }
-    }
-  </style>
+@media(max-width:600px) {
+
+  body {
+    padding: 10px;
+  }
+
+  .container {
+    padding: 20px;
+  }
+
+  h1 {
+    font-size: 27px;
+  }
+
+  button {
+    width: 100%;
+  }
+
+}
+
+</style>
 </head>
 
 <body>
 
 <div class="container">
 
-  <h1>📷 Applicant Photo</h1>
+<h1>📷 Applicant Photo</h1>
 
-  <div class="applicant">
-    Applicant:
-    <strong id="applicantName">Applicant</strong>
-  </div>
+<div class="applicant">
+Applicant:
+<strong id="applicantName">Applicant</strong>
+</div>
 
-  <!-- CAMERA -->
-  <div class="camera-box">
+<div class="camera-box">
 
-    <video
-      id="video"
-      autoplay
-      playsinline
-      muted>
-    </video>
+<video
+  id="video"
+  autoplay
+  playsinline
+  muted>
+</video>
 
-    <canvas id="canvas"></canvas>
+<canvas id="canvas"></canvas>
 
-    <img
-      id="preview"
-      class="preview"
-      alt="Captured applicant photo">
+<img
+  id="preview"
+  alt="Captured applicant photo">
 
-    <div
-      id="placeholder"
-      class="camera-placeholder">
+<div
+  id="placeholder"
+  class="camera-placeholder">
 
-      <span class="icon">📷</span>
+<span class="icon">📷</span>
 
-      Camera is not active
+Camera is not active
 
-    </div>
-
-  </div>
-
-
-  <!-- BUTTONS -->
-  <div class="buttons">
-
-    <button
-      type="button"
-      id="enableButton"
-      class="btn-camera"
-      onclick="startCamera()">
-
-      📷 Enable Camera
-
-    </button>
-
-    <button
-      type="button"
-      id="captureButton"
-      class="btn-capture"
-      onclick="capturePhoto()">
-
-      📸 Take Photo
-
-    </button>
-
-    <button
-      type="button"
-      id="retakeButton"
-      class="btn-retake"
-      onclick="retakePhoto()">
-
-      🔄 Retake
-
-    </button>
-
-    <button
-      type="button"
-      id="saveButton"
-      class="btn-save"
-      onclick="savePhoto()">
-
-      💾 Save Photo
-
-    </button>
-
-    <button
-      type="button"
-      class="btn-cancel"
-      onclick="closePage()">
-
-      ❌ Cancel
-
-    </button>
-
-  </div>
-
-
-  <!-- STATUS -->
-  <div
-    id="status"
-    class="status info">
-
-    Click "Enable Camera" to start the camera.
-
-  </div>
-
-
-  <!-- SAVING -->
-  <div
-    id="saving"
-    class="saving">
-
-    <span class="spinner"></span>
-
-    Saving applicant photo...
-
-  </div>
-
-
-  <!-- SUCCESS -->
-  <div
-    id="successBox"
-    class="success-box">
-
-    <strong>✅ Photo Saved Successfully</strong>
-
-    The applicant photo has been saved to Google Drive
-    and inserted into the applicant form.
-
-  </div>
-
-
-  <!-- INSTRUCTIONS -->
-  <div class="instructions">
-
-    <strong>⚠️ Camera Access Required</strong>
-
-    <ol>
-
-      <li>
-        Use <b>Google Chrome</b> or <b>Microsoft Edge</b>.
-      </li>
-
-      <li>
-        Make sure your computer has a working camera.
-      </li>
-
-      <li>
-        Click <b>Enable Camera</b>.
-      </li>
-
-      <li>
-        If Chrome asks for camera permission,
-        select <b>Allow</b>.
-      </li>
-
-      <li>
-        Position the applicant properly inside
-        the camera frame.
-      </li>
-
-      <li>
-        Click <b>Take Photo</b>.
-      </li>
-
-      <li>
-        Review the photo and click <b>Save Photo</b>.
-      </li>
-
-    </ol>
-
-  </div>
+</div>
 
 </div>
 
 
-<!-- =====================================================
-     HIDDEN UPLOAD FORM
-     ===================================================== -->
+<div class="buttons">
+
+<button
+  type="button"
+  id="enableButton"
+  class="btn-camera">
+
+📷 Enable Camera
+
+</button>
+
+<button
+  type="button"
+  id="captureButton"
+  class="btn-capture hidden">
+
+📸 Take Photo
+
+</button>
+
+<button
+  type="button"
+  id="retakeButton"
+  class="btn-retake hidden">
+
+🔄 Retake
+
+</button>
+
+<button
+  type="button"
+  id="saveButton"
+  class="btn-save hidden">
+
+💾 Save Photo
+
+</button>
+
+<button
+  type="button"
+  id="cancelButton"
+  class="btn-cancel">
+
+❌ Cancel
+
+</button>
+
+</div>
+
+
+<div
+  id="status"
+  class="status info">
+
+Click "Enable Camera" to start the camera.
+
+</div>
+
+
+<div
+  id="saving"
+  class="saving">
+
+<span class="spinner"></span>
+
+Saving applicant photo...
+
+</div>
+
+
+<div
+  id="successBox"
+  class="success-box">
+
+<strong>✅ Photo Saved Successfully</strong>
+
+The applicant photo has been saved to Google Drive
+and inserted into the applicant form.
+
+</div>
+
+
+<div class="instructions">
+
+<strong>⚠️ Camera Access Required</strong>
+
+<ol>
+
+<li>Use Google Chrome or Microsoft Edge.</li>
+
+<li>Make sure your computer has a working camera.</li>
+
+<li>Click <b>Enable Camera</b>.</li>
+
+<li>Select <b>Allow</b> when Chrome asks for camera permission.</li>
+
+<li>Position the applicant inside the camera frame.</li>
+
+<li>Click <b>Take Photo</b>.</li>
+
+<li>Review the photo.</li>
+
+<li>Click <b>Save Photo</b>.</li>
+
+</ol>
+
+</div>
+
+</div>
+
+
+<!-- ================================
+     HIDDEN FORM
+     ================================ -->
 
 <form
   id="uploadForm"
   method="POST"
   target="uploadFrame">
 
-  <input
-    type="hidden"
-    name="base64Data"
-    id="base64Data">
+<input
+  type="hidden"
+  name="base64Data"
+  id="base64Data">
 
-  <input
-    type="hidden"
-    name="spreadsheetId"
-    id="spreadsheetId">
+<input
+  type="hidden"
+  name="spreadsheetId"
+  id="spreadsheetId">
 
-  <input
-    type="hidden"
-    name="sheetName"
-    id="sheetName">
+<input
+  type="hidden"
+  name="sheetName"
+  id="sheetName">
 
-  <input
-    type="hidden"
-    name="applicantName"
-    id="formApplicantName">
+<input
+  type="hidden"
+  name="applicantName"
+  id="formApplicantName">
 
 </form>
 
@@ -461,42 +444,23 @@
 
 <script>
 
-/* =========================================================
+/* =====================================================
    CONFIGURATION
-   ========================================================= */
-
-/*
- * YOUR CURRENT APPS SCRIPT WEB APP
- */
+   ===================================================== */
 
 const APPS_SCRIPT_URL =
-  'https://script.google.com/macros/s/AKfycbxrb3vypWQ3OLkkitcJd2a4x0jb7eSQCBZu4JM3ghccQBl-jkvAnASV9GlbBu-MQalw/exec';
-
-
-/*
- * DEFAULT GOOGLE SPREADSHEET
- *
- * This is your Applicant Forms spreadsheet.
- *
- * If the Google Sheet sends another spreadsheetId
- * through the URL, that value will be used instead.
- */
+'https://script.google.com/macros/s/AKfycbxrb3vypWQ3OLkkitcJd2a4x0jb7eSQCBZu4JM3ghccQBl-jkvAnASV9GlbBu-MQalw/exec';
 
 const DEFAULT_SPREADSHEET_ID =
-  '1Sxnm9G1QGPTXLYmBqNGIASWlNRrAX74OtAOv0Bet8Y0';
-
-
-/*
- * DEFAULT SHEET
- */
+'1Sxnm9G1QGPTXLYmBqNGIASWlNRrAX74OtAOv0Bet8Y0';
 
 const DEFAULT_SHEET_NAME =
-  '01 Information + ID';
+'01 Information + ID';
 
 
-/* =========================================================
+/* =====================================================
    VARIABLES
-   ========================================================= */
+   ===================================================== */
 
 let stream = null;
 
@@ -504,775 +468,818 @@ let capturedImage = null;
 
 let cameraStarted = false;
 
-let photoSaved = false;
+let isSaving = false;
 
 
-/* =========================================================
-   HTML ELEMENTS
-   ========================================================= */
+/* =====================================================
+   ELEMENTS
+   ===================================================== */
 
 const video =
-  document.getElementById('video');
+document.getElementById('video');
 
 const canvas =
-  document.getElementById('canvas');
+document.getElementById('canvas');
 
 const preview =
-  document.getElementById('preview');
+document.getElementById('preview');
 
 const placeholder =
-  document.getElementById('placeholder');
+document.getElementById('placeholder');
 
 const enableButton =
-  document.getElementById('enableButton');
+document.getElementById('enableButton');
 
 const captureButton =
-  document.getElementById('captureButton');
+document.getElementById('captureButton');
 
 const retakeButton =
-  document.getElementById('retakeButton');
+document.getElementById('retakeButton');
 
 const saveButton =
-  document.getElementById('saveButton');
+document.getElementById('saveButton');
+
+const cancelButton =
+document.getElementById('cancelButton');
 
 const status =
-  document.getElementById('status');
+document.getElementById('status');
 
 const saving =
-  document.getElementById('saving');
+document.getElementById('saving');
 
 const successBox =
-  document.getElementById('successBox');
+document.getElementById('successBox');
+
+const uploadForm =
+document.getElementById('uploadForm');
 
 
-/* =========================================================
-   READ URL PARAMETERS
-   ========================================================= */
+/* =====================================================
+   URL PARAMETERS
+   ===================================================== */
 
 const params =
-  new URLSearchParams(
-    window.location.search
-  );
-
-
-/*
- * If spreadsheetId exists in the URL,
- * use it.
- *
- * Otherwise use DEFAULT_SPREADSHEET_ID.
- */
+new URLSearchParams(
+window.location.search
+);
 
 const spreadsheetId =
-  params.get('spreadsheetId') ||
-  DEFAULT_SPREADSHEET_ID;
-
-
-/*
- * If sheetName exists in URL,
- * use it.
- */
+params.get('spreadsheetId') ||
+DEFAULT_SPREADSHEET_ID;
 
 const sheetName =
-  params.get('sheetName') ||
-  DEFAULT_SHEET_NAME;
-
-
-/*
- * Applicant name.
- */
+params.get('sheetName') ||
+DEFAULT_SHEET_NAME;
 
 const applicantName =
-  params.get('applicantName') ||
-  'Applicant';
+params.get('applicantName') ||
+'Applicant';
 
 
-/* =========================================================
-   INITIALIZE PAGE
-   ========================================================= */
+/* =====================================================
+   INITIALIZE
+   ===================================================== */
 
-window.addEventListener(
-  'DOMContentLoaded',
-  function() {
+document.getElementById(
+'applicantName'
+).textContent =
+applicantName;
 
-    document
-      .getElementById('applicantName')
-      .textContent =
-      applicantName;
+document.getElementById(
+'spreadsheetId'
+).value =
+spreadsheetId;
 
+document.getElementById(
+'sheetName'
+).value =
+sheetName;
 
-    document
-      .getElementById('spreadsheetId')
-      .value =
-      spreadsheetId;
+document.getElementById(
+'formApplicantName'
+).value =
+applicantName;
 
-
-    document
-      .getElementById('sheetName')
-      .value =
-      sheetName;
-
-
-    document
-      .getElementById('formApplicantName')
-      .value =
-      applicantName;
+uploadForm.action =
+APPS_SCRIPT_URL;
 
 
-    document
-      .getElementById('uploadForm')
-      .action =
-      APPS_SCRIPT_URL;
+/* =====================================================
+   BUTTON EVENTS
+   ===================================================== */
 
+/*
+ * IMPORTANT:
+ * We use addEventListener instead of onclick.
+ */
 
-    console.log(
-      'Applicant:',
-      applicantName
-    );
+enableButton.addEventListener(
+'click',
+startCamera
+);
 
-    console.log(
-      'Spreadsheet ID:',
-      spreadsheetId
-    );
+captureButton.addEventListener(
+'click',
+capturePhoto
+);
 
-    console.log(
-      'Sheet:',
-      sheetName
-    );
+retakeButton.addEventListener(
+'click',
+retakePhoto
+);
 
-  }
+saveButton.addEventListener(
+'click',
+savePhoto
+);
+
+cancelButton.addEventListener(
+'click',
+closePage
 );
 
 
-/* =========================================================
+/* =====================================================
+   HELPER
+   ===================================================== */
+
+function showButton(button) {
+
+button.classList.remove('hidden');
+
+}
+
+
+function hideButton(button) {
+
+button.classList.add('hidden');
+
+}
+
+
+/* =====================================================
    START CAMERA
-   ========================================================= */
+   ===================================================== */
 
 async function startCamera() {
 
-  try {
+try {
 
-    status.className =
-      'status info';
+status.className =
+'status info';
 
-    status.textContent =
-      'Requesting camera access...';
-
-
-    /*
-     * Browser support check.
-     */
-
-    if (
-      !navigator.mediaDevices ||
-      !navigator.mediaDevices.getUserMedia
-    ) {
-
-      throw new Error(
-        'Camera access is not supported by this browser.'
-      );
-
-    }
+status.textContent =
+'Requesting camera access...';
 
 
-    /*
-     * Stop existing camera first.
-     */
+if (
+!navigator.mediaDevices ||
+!navigator.mediaDevices.getUserMedia
+) {
 
-    stopCamera();
-
-
-    /*
-     * Request camera.
-     */
-
-    stream =
-      await navigator.mediaDevices.getUserMedia({
-
-        video: {
-          facingMode: 'user',
-          width: {
-            ideal: 1280
-          },
-          height: {
-            ideal: 960
-          }
-        },
-
-        audio: false
-
-      });
-
-
-    /*
-     * Connect stream to video.
-     */
-
-    video.srcObject =
-      stream;
-
-
-    video.style.display =
-      'block';
-
-
-    placeholder.style.display =
-      'none';
-
-
-    preview.style.display =
-      'none';
-
-
-    /*
-     * Button changes.
-     */
-
-    enableButton.style.display =
-      'none';
-
-    captureButton.style.display =
-      'inline-block';
-
-    retakeButton.style.display =
-      'none';
-
-    saveButton.style.display =
-      'none';
-
-
-    cameraStarted =
-      true;
-
-
-    status.className =
-      'status success';
-
-    status.textContent =
-      'Camera is ready. Position the applicant and click "Take Photo".';
-
-
-  }
-
-  catch (error) {
-
-    console.error(
-      'Camera error:',
-      error
-    );
-
-
-    status.className =
-      'status error';
-
-
-    if (
-      error.name ===
-      'NotAllowedError'
-    ) {
-
-      status.textContent =
-        '❌ Camera permission was denied. Please allow camera access and reload the page.';
-
-    }
-
-    else if (
-      error.name ===
-      'NotFoundError'
-    ) {
-
-      status.textContent =
-        '❌ No camera was found on this computer.';
-
-    }
-
-    else if (
-      error.name ===
-      'NotReadableError'
-    ) {
-
-      status.textContent =
-        '❌ The camera is already being used by another application. Close Teams, Zoom, or another camera application.';
-
-    }
-
-    else {
-
-      status.textContent =
-        '❌ Camera could not be started: ' +
-        error.message;
-
-    }
-
-  }
+throw new Error(
+'Camera access is not supported by this browser.'
+);
 
 }
 
 
-/* =========================================================
+stopCamera();
+
+
+stream =
+await navigator.mediaDevices.getUserMedia({
+
+video: {
+facingMode: 'user',
+width: {
+ideal: 1280
+},
+height: {
+ideal: 960
+}
+},
+
+audio: false
+
+});
+
+
+video.srcObject =
+stream;
+
+
+await video.play();
+
+
+video.style.display =
+'block';
+
+placeholder.style.display =
+'none';
+
+preview.style.display =
+'none';
+
+
+hideButton(enableButton);
+
+showButton(captureButton);
+
+hideButton(retakeButton);
+
+hideButton(saveButton);
+
+
+cameraStarted =
+true;
+
+
+status.className =
+'status success';
+
+status.textContent =
+'Camera is ready. Position the applicant and click "Take Photo".';
+
+
+}
+
+catch(error) {
+
+console.error(error);
+
+cameraStarted =
+false;
+
+status.className =
+'status error';
+
+
+if(
+error.name === 'NotAllowedError'
+) {
+
+status.textContent =
+'❌ Camera permission was denied. Please allow camera access and reload the page.';
+
+}
+
+else if(
+error.name === 'NotFoundError'
+) {
+
+status.textContent =
+'❌ No camera was found.';
+
+}
+
+else if(
+error.name === 'NotReadableError'
+) {
+
+status.textContent =
+'❌ Camera is being used by another application.';
+
+}
+
+else {
+
+status.textContent =
+'❌ Camera error: ' +
+error.message;
+
+}
+
+}
+
+}
+
+
+/* =====================================================
    CAPTURE PHOTO
-   ========================================================= */
+   ===================================================== */
 
 function capturePhoto() {
 
-  if (
-    !cameraStarted ||
-    !stream
-  ) {
+if(
+!cameraStarted ||
+!stream
+) {
 
-    status.className =
-      'status error';
+status.className =
+'status error';
 
-    status.textContent =
-      '❌ Camera is not active. Click Enable Camera first.';
+status.textContent =
+'❌ Camera is not active.';
 
-    return;
-
-  }
-
-
-  /*
-   * Make sure video has loaded.
-   */
-
-  if (
-    video.videoWidth === 0 ||
-    video.videoHeight === 0
-  ) {
-
-    status.className =
-      'status error';
-
-    status.textContent =
-      '❌ Camera is still starting. Please try again.';
-
-    return;
-
-  }
-
-
-  /*
-   * Set canvas size.
-   */
-
-  canvas.width =
-    video.videoWidth;
-
-  canvas.height =
-    video.videoHeight;
-
-
-  const context =
-    canvas.getContext('2d');
-
-
-  /*
-   * Mirror the photo.
-   */
-
-  context.save();
-
-  context.translate(
-    canvas.width,
-    0
-  );
-
-  context.scale(
-    -1,
-    1
-  );
-
-
-  context.drawImage(
-    video,
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
-
-
-  context.restore();
-
-
-  /*
-   * Convert to JPEG.
-   */
-
-  capturedImage =
-    canvas.toDataURL(
-      'image/jpeg',
-      0.90
-    );
-
-
-  /*
-   * Show captured photo.
-   */
-
-  preview.src =
-    capturedImage;
-
-  preview.style.display =
-    'block';
-
-  video.style.display =
-    'none';
-
-
-  /*
-   * Stop camera.
-   */
-
-  stopCamera();
-
-
-  /*
-   * Change buttons.
-   */
-
-  enableButton.style.display =
-    'none';
-
-  captureButton.style.display =
-    'none';
-
-  retakeButton.style.display =
-    'inline-block';
-
-  saveButton.style.display =
-    'inline-block';
-
-
-  /*
-   * Status.
-   */
-
-  status.className =
-    'status success';
-
-  status.textContent =
-    'Photo captured. Review the photo before saving.';
+return;
 
 }
 
 
-/* =========================================================
+if(
+video.videoWidth === 0 ||
+video.videoHeight === 0
+) {
+
+status.className =
+'status error';
+
+status.textContent =
+'❌ Camera is still loading. Please try again.';
+
+return;
+
+}
+
+
+canvas.width =
+video.videoWidth;
+
+canvas.height =
+video.videoHeight;
+
+
+const context =
+canvas.getContext('2d');
+
+
+/*
+ * Mirror image.
+ */
+
+context.save();
+
+context.translate(
+canvas.width,
+0
+);
+
+context.scale(
+-1,
+1
+);
+
+context.drawImage(
+video,
+0,
+0,
+canvas.width,
+canvas.height
+);
+
+context.restore();
+
+
+capturedImage =
+canvas.toDataURL(
+'image/jpeg',
+0.90
+);
+
+
+preview.src =
+capturedImage;
+
+preview.style.display =
+'block';
+
+video.style.display =
+'none';
+
+
+stopCamera();
+
+
+hideButton(enableButton);
+
+hideButton(captureButton);
+
+showButton(retakeButton);
+
+showButton(saveButton);
+
+
+status.className =
+'status success';
+
+status.textContent =
+'Photo captured. Review the photo before saving.';
+
+}
+
+
+/* =====================================================
    RETAKE PHOTO
-   ========================================================= */
+   ===================================================== */
 
 function retakePhoto() {
 
-  capturedImage =
-    null;
-
-  photoSaved =
-    false;
+console.log(
+'RETAKE BUTTON CLICKED'
+);
 
 
-  /*
-   * Hide preview.
-   */
+if(isSaving) {
 
-  preview.src =
-    '';
-
-  preview.style.display =
-    'none';
-
-
-  /*
-   * Hide buttons.
-   */
-
-  retakeButton.style.display =
-    'none';
-
-  saveButton.style.display =
-    'none';
-
-
-  /*
-   * Start camera again.
-   */
-
-  startCamera();
+return;
 
 }
 
 
-/* =========================================================
+capturedImage =
+null;
+
+
+preview.src =
+'';
+
+preview.style.display =
+'none';
+
+
+successBox.style.display =
+'none';
+
+saving.style.display =
+'none';
+
+
+hideButton(retakeButton);
+
+hideButton(saveButton);
+
+hideButton(captureButton);
+
+
+status.className =
+'status info';
+
+status.textContent =
+'Starting camera again...';
+
+
+startCamera();
+
+}
+
+
+/* =====================================================
    SAVE PHOTO
-   ========================================================= */
+   ===================================================== */
 
 function savePhoto() {
 
-  /*
-   * Check captured image.
-   */
-
-  if (!capturedImage) {
-
-    status.className =
-      'status error';
-
-    status.textContent =
-      '❌ Please take a photo first.';
-
-    return;
-
-  }
+console.log(
+'SAVE BUTTON CLICKED'
+);
 
 
-  /*
-   * Check Spreadsheet ID.
-   */
+if(isSaving) {
 
-  if (!spreadsheetId) {
-
-    status.className =
-      'status error';
-
-    status.textContent =
-      '❌ Spreadsheet ID is missing.';
-
-    return;
-
-  }
-
-
-  /*
-   * Check Apps Script URL.
-   */
-
-  if (!APPS_SCRIPT_URL) {
-
-    status.className =
-      'status error';
-
-    status.textContent =
-      '❌ Apps Script Web App URL is missing.';
-
-    return;
-
-  }
-
-
-  /*
-   * Disable buttons.
-   */
-
-  saveButton.disabled =
-    true;
-
-  retakeButton.disabled =
-    true;
-
-
-  /*
-   * Show saving.
-   */
-
-  saving.style.display =
-    'block';
-
-
-  status.className =
-    'status info';
-
-  status.textContent =
-    'Uploading photo to Google Drive...';
-
-
-  /*
-   * Put photo into hidden form.
-   */
-
-  document
-    .getElementById('base64Data')
-    .value =
-    capturedImage;
-
-
-  document
-    .getElementById('spreadsheetId')
-    .value =
-    spreadsheetId;
-
-
-  document
-    .getElementById('sheetName')
-    .value =
-    sheetName;
-
-
-  document
-    .getElementById('formApplicantName')
-    .value =
-    applicantName;
-
-
-  /*
-   * Submit form.
-   *
-   * Hidden iframe prevents the page from
-   * leaving GitHub Pages.
-   */
-
-  const form =
-    document.getElementById('uploadForm');
-
-
-  form.action =
-    APPS_SCRIPT_URL;
-
-
-  form.submit();
-
-
-  /*
-   * Wait for Apps Script to process.
-   */
-
-  setTimeout(
-    function() {
-
-      saving.style.display =
-        'none';
-
-
-      successBox.style.display =
-        'block';
-
-
-      status.className =
-        'status success';
-
-      status.textContent =
-        '✅ Photo submitted successfully.';
-
-
-      photoSaved =
-        true;
-
-
-    },
-    5000
-  );
+return;
 
 }
 
 
-/* =========================================================
+if(!capturedImage) {
+
+status.className =
+'status error';
+
+status.textContent =
+'❌ Please take a photo first.';
+
+return;
+
+}
+
+
+if(!spreadsheetId) {
+
+status.className =
+'status error';
+
+status.textContent =
+'❌ Spreadsheet ID is missing.';
+
+return;
+
+}
+
+
+if(!APPS_SCRIPT_URL) {
+
+status.className =
+'status error';
+
+status.textContent =
+'❌ Apps Script URL is missing.';
+
+return;
+
+}
+
+
+isSaving =
+true;
+
+
+saveButton.disabled =
+true;
+
+retakeButton.disabled =
+true;
+
+
+saving.style.display =
+'block';
+
+successBox.style.display =
+'none';
+
+
+status.className =
+'status info';
+
+status.textContent =
+'Uploading photo to Google Drive...';
+
+
+/*
+ * Put values into form.
+ */
+
+document.getElementById(
+'base64Data'
+).value =
+capturedImage;
+
+document.getElementById(
+'spreadsheetId'
+).value =
+spreadsheetId;
+
+document.getElementById(
+'sheetName'
+).value =
+sheetName;
+
+document.getElementById(
+'formApplicantName'
+).value =
+applicantName;
+
+
+uploadForm.action =
+APPS_SCRIPT_URL;
+
+
+/*
+ * Submit to Apps Script.
+ */
+
+try {
+
+uploadForm.submit();
+
+}
+
+catch(error) {
+
+console.error(error);
+
+saving.style.display =
+'none';
+
+saveButton.disabled =
+false;
+
+retakeButton.disabled =
+false;
+
+isSaving =
+false;
+
+status.className =
+'status error';
+
+status.textContent =
+'❌ Upload failed: ' +
+error.message;
+
+return;
+
+}
+
+
+/*
+ * Apps Script receives the request.
+ *
+ * Because the response is inside a hidden iframe,
+ * wait for the iframe load event.
+ */
+
+let completed = false;
+
+
+const uploadFrame =
+document.getElementById(
+'uploadFrame'
+);
+
+
+function uploadFinished() {
+
+if(completed) {
+
+return;
+
+}
+
+completed =
+true;
+
+
+saving.style.display =
+'none';
+
+
+successBox.style.display =
+'block';
+
+
+status.className =
+'status success';
+
+status.textContent =
+'✅ Photo saved successfully to Google Drive.';
+
+
+isSaving =
+false;
+
+}
+
+
+uploadFrame.onload =
+function() {
+
+setTimeout(
+uploadFinished,
+500
+);
+
+};
+
+
+/*
+ * Safety fallback.
+ *
+ * If iframe load event is blocked,
+ * show result after 8 seconds.
+ */
+
+setTimeout(
+function() {
+
+if(!completed) {
+
+uploadFinished();
+
+}
+
+},
+8000
+);
+
+}
+
+
+/* =====================================================
    STOP CAMERA
-   ========================================================= */
+   ===================================================== */
 
 function stopCamera() {
 
-  if (!stream) {
+if(stream) {
 
-    cameraStarted =
-      false;
+stream
+.getTracks()
+.forEach(
+function(track) {
 
-    return;
+track.stop();
 
-  }
+}
+);
 
+}
 
-  stream
-    .getTracks()
-    .forEach(
-      function(track) {
+stream =
+null;
 
-        track.stop();
-
-      }
-    );
-
-
-  stream =
-    null;
-
-  cameraStarted =
-    false;
+cameraStarted =
+false;
 
 
-  /*
-   * Disconnect video.
-   */
+try {
 
-  try {
+video.srcObject =
+null;
 
-    video.srcObject =
-      null;
+}
 
-  }
+catch(error) {
 
-  catch (error) {
+console.log(error);
 
-    console.log(
-      'Video cleanup:',
-      error
-    );
-
-  }
+}
 
 }
 
 
-/* =========================================================
-   CANCEL / CLOSE
-   ========================================================= */
+/* =====================================================
+   CLOSE
+   ===================================================== */
 
 function closePage() {
 
-  /*
-   * Stop camera.
-   */
-
-  stopCamera();
+stopCamera();
 
 
-  /*
-   * Try closing the tab.
-   */
+try {
 
-  window.close();
+window.close();
 
+}
 
-  /*
-   * If browser prevents closing,
-   * return to previous page.
-   */
+catch(error) {
 
-  setTimeout(
-    function() {
-
-      if (
-        window.history.length > 1
-      ) {
-
-        window.history.back();
-
-      }
-
-    },
-    300
-  );
+console.log(error);
 
 }
 
 
-/* =========================================================
+setTimeout(
+function() {
+
+if(
+window.history.length > 1
+) {
+
+window.history.back();
+
+}
+
+},
+300
+);
+
+}
+
+
+/* =====================================================
    PAGE EXIT
-   ========================================================= */
+   ===================================================== */
 
 window.addEventListener(
-  'beforeunload',
-  function() {
+'beforeunload',
+function() {
 
-    stopCamera();
+stopCamera();
 
-  }
+}
+);
+
+
+/* =====================================================
+   DEBUG
+   ===================================================== */
+
+console.log(
+'Applicant Camera Loaded'
+);
+
+console.log(
+'Applicant:',
+applicantName
+);
+
+console.log(
+'Spreadsheet:',
+spreadsheetId
+);
+
+console.log(
+'Sheet:',
+sheetName
+);
+
+console.log(
+'Apps Script:',
+APPS_SCRIPT_URL
 );
 
 </script>
