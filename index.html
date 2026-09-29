@@ -1,1288 +1,728 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <base target="_top">
 
-<title>Applicant Photo Capture</title>
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
 
-<style>
+  <title>Applicant Photo Capture</title>
 
-* {
-  box-sizing: border-box;
-}
+  <style>
 
-body {
-  margin: 0;
-  padding: 25px 15px;
-  background: #f4f7f9;
-  font-family: Arial, Helvetica, sans-serif;
-  color: #333;
-}
+    * {
+      box-sizing: border-box;
+    }
 
-.container {
-  max-width: 850px;
-  margin: auto;
-  background: white;
-  border-radius: 18px;
-  padding: 30px;
-  box-shadow: 0 5px 25px rgba(0,0,0,0.12);
-}
+    body {
+      margin: 0;
+      padding: 30px 15px;
+      background: #f4f6f8;
+      font-family: Arial, Helvetica, sans-serif;
+      color: #222;
+    }
 
-h1 {
-  text-align: center;
-  color: #174a7e;
-  margin: 0 0 8px;
-  font-size: 32px;
-}
+    .container {
+      width: 100%;
+      max-width: 780px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 18px;
+      padding: 30px;
+      box-shadow: 0 5px 25px rgba(0,0,0,0.12);
+    }
 
-.applicant {
-  text-align: center;
-  font-size: 18px;
-  margin-bottom: 22px;
-}
+    .title {
+      text-align: center;
+      font-size: 34px;
+      font-weight: 700;
+      color: #174a78;
+      margin-bottom: 8px;
+    }
 
-.applicant strong {
-  color: #174a7e;
-}
+    .applicant {
+      text-align: center;
+      font-size: 18px;
+      color: #555;
+      margin-bottom: 25px;
+    }
 
-.camera-box {
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  background: #000;
-  border-radius: 14px;
-  overflow: hidden;
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
+    .applicant strong {
+      color: #222;
+    }
 
-#video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: none;
-  transform: scaleX(-1);
-}
+    .camera-wrapper {
+      width: 100%;
+      background: #000;
+      border-radius: 14px;
+      overflow: hidden;
+      position: relative;
+      min-height: 420px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
-#preview {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: none;
-}
+    video {
+      width: 100%;
+      height: auto;
+      min-height: 420px;
+      max-height: 520px;
+      object-fit: contain;
+      display: none;
+      background: #000;
+    }
 
-#canvas {
-  display: none;
-}
+    canvas {
+      display: none;
+    }
 
-.camera-placeholder {
-  color: #ddd;
-  text-align: center;
-  font-size: 20px;
-}
+    .camera-placeholder {
+      color: #ddd;
+      text-align: center;
+      font-size: 20px;
+      padding: 40px;
+    }
 
-.camera-placeholder .icon {
-  display: block;
-  font-size: 50px;
-  margin-bottom: 10px;
-}
+    .camera-icon {
+      font-size: 48px;
+      display: block;
+      margin-bottom: 15px;
+    }
 
-.buttons {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 22px;
-  flex-wrap: wrap;
-}
+    .button-area {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
+      margin-top: 25px;
+    }
 
-button {
-  border: none;
-  border-radius: 9px;
-  padding: 14px 25px;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: 0.15s;
-}
+    button {
+      border: none;
+      border-radius: 9px;
+      padding: 14px 28px;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+      min-width: 160px;
+    }
 
-button:hover {
-  transform: translateY(-1px);
-}
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
 
-button:active {
-  transform: translateY(1px);
-}
+    .btn-camera {
+      background: #1a73e8;
+      color: white;
+    }
 
-button:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-  transform: none;
-}
+    .btn-camera:hover {
+      background: #155fc0;
+    }
 
-.btn-camera {
-  background: #1a73e8;
-  color: white;
-}
+    .btn-capture {
+      background: #188038;
+      color: white;
+      display: none;
+    }
 
-.btn-capture {
-  background: #188038;
-  color: white;
-}
+    .btn-retake {
+      background: #f9ab00;
+      color: white;
+      display: none;
+    }
 
-.btn-retake {
-  background: #f9ab00;
-  color: white;
-}
+    .btn-save {
+      background: #0b8043;
+      color: white;
+      display: none;
+    }
 
-.btn-save {
-  background: #137333;
-  color: white;
-}
+    .btn-cancel {
+      background: #d93025;
+      color: white;
+    }
 
-.btn-cancel {
-  background: #d93025;
-  color: white;
-}
+    .status {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 17px;
+      min-height: 25px;
+    }
 
-.hidden {
-  display: none !important;
-}
+    .status.info {
+      color: #555;
+    }
 
-.status {
-  text-align: center;
-  margin-top: 18px;
-  font-size: 16px;
-  min-height: 24px;
-}
+    .status.success {
+      color: #188038;
+      font-weight: bold;
+    }
 
-.status.info {
-  color: #555;
-}
+    .status.error {
+      color: #d93025;
+      font-weight: bold;
+    }
 
-.status.success {
-  color: #188038;
-  font-weight: bold;
-}
+    .status.warning {
+      color: #b06000;
+      font-weight: bold;
+    }
 
-.status.error {
-  color: #d93025;
-  font-weight: bold;
-}
+    .help-box {
+      margin-top: 22px;
+      padding: 20px;
+      background: #fff8e1;
+      border: 1px solid #f6c453;
+      border-radius: 10px;
+      display: none;
+    }
 
-.saving {
-  display: none;
-  text-align: center;
-  margin-top: 18px;
-}
+    .help-box h3 {
+      margin-top: 0;
+      color: #8a5700;
+    }
 
-.spinner {
-  display: inline-block;
-  width: 23px;
-  height: 23px;
-  border: 4px solid #ddd;
-  border-top: 4px solid #1a73e8;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  vertical-align: middle;
-  margin-right: 8px;
-}
+    .help-box p {
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
+    .error-code {
+      margin-top: 15px;
+      padding: 12px;
+      background: #fce8e6;
+      border-radius: 7px;
+      color: #a50e0e;
+      font-family: monospace;
+      word-break: break-word;
+    }
 
-.success-box {
-  display: none;
-  margin-top: 18px;
-  padding: 18px;
-  background: #e6f4ea;
-  border: 1px solid #34a853;
-  border-radius: 10px;
-  text-align: center;
-  color: #137333;
-}
+    .preview {
+      display: none;
+      width: 100%;
+      max-height: 520px;
+      object-fit: contain;
+      background: #000;
+    }
 
-.success-box strong {
-  display: block;
-  font-size: 19px;
-  margin-bottom: 5px;
-}
+    .save-message {
+      display: none;
+      margin-top: 20px;
+      padding: 18px;
+      background: #e6f4ea;
+      border: 1px solid #34a853;
+      border-radius: 10px;
+      color: #137333;
+      text-align: center;
+    }
 
-.instructions {
-  margin-top: 22px;
-  padding: 18px;
-  background: #fff8e1;
-  border: 1px solid #f6c453;
-  border-radius: 10px;
-  line-height: 1.6;
-}
+    .loading {
+      display: none;
+      text-align: center;
+      margin-top: 15px;
+      color: #555;
+    }
 
-.instructions strong {
-  display: block;
-  margin-bottom: 8px;
-  color: #8a5700;
-}
+    .small-note {
+      text-align: center;
+      color: #777;
+      font-size: 13px;
+      margin-top: 20px;
+      line-height: 1.5;
+    }
 
-#uploadForm {
-  display: none;
-}
+    .camera-choice { margin: 0 0 20px; }
+    .camera-choice label { display: block; font-weight: bold; margin-bottom: 8px; }
+    .camera-choice select { width: 100%; padding: 12px; font-size: 16px; border: 1px solid #9ba9b6; border-radius: 8px; }
+    .camera-choice p { font-size: 14px; color: #555; margin: 8px 0 0; }
+  </style>
 
-@media(max-width:600px) {
-
-  body {
-    padding: 10px;
-  }
-
-  .container {
-    padding: 20px;
-  }
-
-  h1 {
-    font-size: 27px;
-  }
-
-  button {
-    width: 100%;
-  }
-
-}
-
-</style>
 </head>
 
 <body>
 
 <div class="container">
 
-<h1>📷 Applicant Photo</h1>
+  <div class="title">
+    📷 Applicant Photo
+  </div>
 
-<div class="applicant">
-Applicant:
-<strong id="applicantName">Applicant</strong>
+  <div class="applicant">
+    Applicant:
+    <strong id="applicantName">Applicant</strong>
+  </div>
+
+  <div class="camera-choice">
+    <label for="cameraSelect">Camera</label>
+    <select id="cameraSelect" onchange="enableCamera()" disabled>
+      <option value="">Enable camera to see available devices</option>
+    </select>
+    <p>After enabling the camera, select your USB webcam or laptop camera.</p>
+  </div>
+  <!-- CAMERA AREA -->
+
+  <div class="camera-wrapper">
+
+    <video
+      id="video"
+      autoplay
+      playsinline
+      muted>
+    </video>
+
+    <canvas id="canvas"></canvas>
+
+    <img
+      id="preview"
+      class="preview"
+      alt="Captured Applicant Photo">
+
+    <div
+      id="placeholder"
+      class="camera-placeholder">
+
+      <span class="camera-icon">📷</span>
+
+      <div>
+        Camera is not active
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- BUTTONS -->
+
+  <div class="button-area">
+
+    <button
+      id="enableBtn"
+      class="btn-camera"
+      onclick="enableCamera()">
+
+      📷 Enable Camera
+
+    </button>
+
+    <button
+      id="captureBtn"
+      class="btn-capture"
+      onclick="capturePhoto()">
+
+      📸 Take Photo
+
+    </button>
+
+    <button
+      id="retakeBtn"
+      class="btn-retake"
+      onclick="retakePhoto()">
+
+      🔄 Retake
+
+    </button>
+
+    <button
+      id="saveBtn"
+      class="btn-save"
+      onclick="savePhoto()">
+
+      💾 Save Photo
+
+    </button>
+
+    <button
+      id="cancelBtn"
+      class="btn-cancel"
+      onclick="cancelPage()">
+
+      ❌ Cancel
+
+    </button>
+
+  </div>
+
+  <!-- STATUS -->
+
+  <div
+    id="status"
+    role="status"
+    aria-live="polite"
+    class="status info">
+
+    Click "Enable Camera" to start the camera.
+
+  </div>
+
+  <!-- LOADING -->
+
+  <div
+    id="loading"
+    class="loading">
+
+    ⏳ Saving photo, please wait...
+
+  </div>
+
+  <!-- ERROR / HELP -->
+
+  <div
+    id="helpBox"
+    class="help-box">
+
+    <h3>Camera help</h3>
+
+    <p>
+      If the camera does not start, check its connection and browser permission.
+    </p>
+
+    <p>
+      Please check the following:
+    </p>
+
+    <p>
+      1. Make sure you are using <b>Google Chrome</b> or
+      <b>Microsoft Edge</b>.
+    </p>
+
+    <p>
+      2. Make sure your computer has a working camera.
+    </p>
+
+    <p>
+      3. In Chrome, open the camera permission settings for
+      this Web App and select <b>Allow</b>.
+    </p>
+
+    <p>
+      4. If the permission was previously blocked, reset the
+      permission and reload this page.
+    </p>
+
+    <p>
+      5. Close other applications that may already be using
+      the camera, such as Teams or Zoom.
+    </p>
+
+    <div
+      id="errorCode"
+      class="error-code">
+    </div>
+
+  </div>
+
+  <div class="small-note">
+
+    The photo will be saved to the
+    <b>Applicant Photos and Signatures</b>
+    folder and inserted into the applicant form.
+
+  </div>
+
 </div>
-
-<div class="camera-box">
-
-<video
-  id="video"
-  autoplay
-  playsinline
-  muted>
-</video>
-
-<canvas id="canvas"></canvas>
-
-<img
-  id="preview"
-  alt="Captured applicant photo">
-
-<div
-  id="placeholder"
-  class="camera-placeholder">
-
-<span class="icon">📷</span>
-
-Camera is not active
-
-</div>
-
-</div>
-
-
-<div class="buttons">
-
-<button
-  type="button"
-  id="enableButton"
-  class="btn-camera">
-
-📷 Enable Camera
-
-</button>
-
-<button
-  type="button"
-  id="captureButton"
-  class="btn-capture hidden">
-
-📸 Take Photo
-
-</button>
-
-<button
-  type="button"
-  id="retakeButton"
-  class="btn-retake hidden">
-
-🔄 Retake
-
-</button>
-
-<button
-  type="button"
-  id="saveButton"
-  class="btn-save hidden">
-
-💾 Save Photo
-
-</button>
-
-<button
-  type="button"
-  id="cancelButton"
-  class="btn-cancel">
-
-❌ Cancel
-
-</button>
-
-</div>
-
-
-<div
-  id="status"
-  class="status info">
-
-Click "Enable Camera" to start the camera.
-
-</div>
-
-
-<div
-  id="saving"
-  class="saving">
-
-<span class="spinner"></span>
-
-Saving applicant photo...
-
-</div>
-
-
-<div
-  id="successBox"
-  class="success-box">
-
-<strong>✅ Photo Saved Successfully</strong>
-
-The applicant photo has been saved to Google Drive
-and inserted into the applicant form.
-
-</div>
-
-
-<div class="instructions">
-
-<strong>⚠️ Camera Access Required</strong>
-
-<ol>
-
-<li>Use Google Chrome or Microsoft Edge.</li>
-
-<li>Make sure your computer has a working camera.</li>
-
-<li>Click <b>Enable Camera</b>.</li>
-
-<li>Select <b>Allow</b> when Chrome asks for camera permission.</li>
-
-<li>Position the applicant inside the camera frame.</li>
-
-<li>Click <b>Take Photo</b>.</li>
-
-<li>Review the photo.</li>
-
-<li>Click <b>Save Photo</b>.</li>
-
-</ol>
-
-</div>
-
-</div>
-
-
-<!-- ================================
-     HIDDEN FORM
-     ================================ -->
-
-<form
-  id="uploadForm"
-  method="POST"
-  target="uploadFrame">
-
-<input
-  type="hidden"
-  name="base64Data"
-  id="base64Data">
-
-<input
-  type="hidden"
-  name="spreadsheetId"
-  id="spreadsheetId">
-
-<input
-  type="hidden"
-  name="sheetName"
-  id="sheetName">
-
-<input
-  type="hidden"
-  name="applicantName"
-  id="formApplicantName">
-
-</form>
-
-<iframe
-  name="uploadFrame"
-  id="uploadFrame"
-  style="display:none;">
-</iframe>
-
 
 <script>
-
-/* =====================================================
-   CONFIGURATION
-   ===================================================== */
-
-const APPS_SCRIPT_URL =
-'https://script.google.com/macros/s/AKfycbyPWdga_hYGro-OQb_zEeXDWykn8LA6R5bPc99w4DPq_GyLRdelrrzozp6sxjugMIfl/exec';
-
-const DEFAULT_SPREADSHEET_ID =
-'1Sxnm9G1QGPTXLYmBqNGIASWlNRrAX74OtAOv0Bet8Y0';
-
-const DEFAULT_SHEET_NAME =
-'01 Information + ID';
-
-
-/* =====================================================
-   VARIABLES
-   ===================================================== */
+// This page is served by GitHub Pages. Send the photo with a normal form POST.
+// google.script.run and Apps Script template tags are not available here.
+const params = new URLSearchParams(window.location.search);
+const spreadsheetId = params.get('spreadsheetId') || '';
+const sheetName = params.get('sheetName') || '01 Information + ID';
+const applicantName = params.get('applicantName') || 'Applicant';
+const appsScriptUrl = params.get('appsScriptUrl') || '';
+const PHOTO_CAPTURE = Object.freeze({ maxEdge: 800, maxBytes: 1200000 });
 
 let stream = null;
-
 let capturedImage = null;
-
-let cameraStarted = false;
-
-let isSaving = false;
-
-
-/* =====================================================
-   ELEMENTS
-   ===================================================== */
-
-const video =
-document.getElementById('video');
-
-const canvas =
-document.getElementById('canvas');
-
-const preview =
-document.getElementById('preview');
-
-const placeholder =
-document.getElementById('placeholder');
-
-const enableButton =
-document.getElementById('enableButton');
-
-const captureButton =
-document.getElementById('captureButton');
-
-const retakeButton =
-document.getElementById('retakeButton');
-
-const saveButton =
-document.getElementById('saveButton');
-
-const cancelButton =
-document.getElementById('cancelButton');
-
-const status =
-document.getElementById('status');
-
-const saving =
-document.getElementById('saving');
-
-const successBox =
-document.getElementById('successBox');
-
-const uploadForm =
-document.getElementById('uploadForm');
-
-
-/* =====================================================
-   URL PARAMETERS
-   ===================================================== */
-
-const params =
-new URLSearchParams(
-window.location.search
-);
-
-const spreadsheetId =
-params.get('spreadsheetId') ||
-DEFAULT_SPREADSHEET_ID;
-
-const sheetName =
-params.get('sheetName') ||
-DEFAULT_SHEET_NAME;
-
-const applicantName =
-params.get('applicantName') ||
-'Applicant';
-
-
-/* =====================================================
-   INITIALIZE
-   ===================================================== */
-
-document.getElementById(
-'applicantName'
-).textContent =
-applicantName;
-
-document.getElementById(
-'spreadsheetId'
-).value =
-spreadsheetId;
-
-document.getElementById(
-'sheetName'
-).value =
-sheetName;
-
-document.getElementById(
-'formApplicantName'
-).value =
-applicantName;
-
-uploadForm.action =
-APPS_SCRIPT_URL;
-
-
-/* =====================================================
-   BUTTON EVENTS
-   ===================================================== */
-
-/*
- * IMPORTANT:
- * We use addEventListener instead of onclick.
- */
-
-enableButton.addEventListener(
-'click',
-startCamera
-);
-
-captureButton.addEventListener(
-'click',
-capturePhoto
-);
-
-retakeButton.addEventListener(
-'click',
-retakePhoto
-);
-
-saveButton.addEventListener(
-'click',
-savePhoto
-);
-
-cancelButton.addEventListener(
-'click',
-closePage
-);
-
-
-/* =====================================================
-   HELPER
-   ===================================================== */
-
-function showButton(button) {
-
-button.classList.remove('hidden');
-
-}
-
-
-function hideButton(button) {
-
-button.classList.add('hidden');
-
-}
-
-
-/* =====================================================
-   START CAMERA
-   ===================================================== */
-
-async function startCamera() {
-
-try {
-
-status.className =
-'status info';
-
-status.textContent =
-'Requesting camera access...';
-
-
-if (
-!navigator.mediaDevices ||
-!navigator.mediaDevices.getUserMedia
-) {
-
-throw new Error(
-'Camera access is not supported by this browser.'
-);
-
-}
-
-
-stopCamera();
-
-
-stream =
-await navigator.mediaDevices.getUserMedia({
-
-video: {
-facingMode: 'user',
-width: {
-ideal: 1280
-},
-height: {
-ideal: 960
-}
-},
-
-audio: false
-
+let starting = false;
+let saving = false;
+
+window.addEventListener('load', function() {
+  document.getElementById('applicantName').textContent = applicantName;
+  try {
+    validateDestination();
+    setStatus('Click "Enable Camera", then select the camera you want to use.', 'info');
+  } catch (error) {
+    document.getElementById('enableBtn').disabled = true;
+    setStatus(error.message, 'error');
+  }
 });
 
-
-video.srcObject =
-stream;
-
-
-await video.play();
-
-
-video.style.display =
-'block';
-
-placeholder.style.display =
-'none';
-
-preview.style.display =
-'none';
-
-
-hideButton(enableButton);
-
-showButton(captureButton);
-
-hideButton(retakeButton);
-
-hideButton(saveButton);
-
-
-cameraStarted =
-true;
-
-
-status.className =
-'status success';
-
-status.textContent =
-'Camera is ready. Position the applicant and click "Take Photo".';
-
-
+function validateDestination() {
+  if (!spreadsheetId || !appsScriptUrl) {
+    throw new Error('Open this camera using the camera button in the TIPON applicant form.');
+  }
+  let endpoint;
+  try { endpoint = new URL(appsScriptUrl); } catch (error) {
+    throw new Error('The camera save address is invalid. Reopen the camera from the applicant form.');
+  }
+  if (endpoint.protocol !== 'https:' || endpoint.hostname !== 'script.google.com' ||
+      !/^\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(endpoint.pathname) ||
+      endpoint.username || endpoint.password || endpoint.port || endpoint.search || endpoint.hash) {
+    throw new Error('The camera save address is invalid. Reopen the camera from the applicant form.');
+  }
+  return endpoint.href;
 }
 
-catch(error) {
+async function enableCamera() {
+  if (starting || saving) return;
+  starting = true;
+  hideHelp();
+  capturedImage = null;
+  const enableBtn = document.getElementById('enableBtn');
+  const cameraSelect = document.getElementById('cameraSelect');
+  const selectedDeviceId = cameraSelect.value;
+  enableBtn.disabled = true;
+  cameraSelect.disabled = true;
+  document.getElementById('captureBtn').style.display = 'none';
+  document.getElementById('retakeBtn').style.display = 'none';
+  document.getElementById('saveBtn').style.display = 'none';
+  document.getElementById('preview').style.display = 'none';
+  setStatus('Starting camera...', 'info');
+  stopCamera();
 
-console.error(error);
+  try {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      throw new Error('Camera access is unavailable. Open the camera page in Chrome or Edge over HTTPS.');
+    }
+    const videoSettings = { width: { ideal: 1280 }, height: { ideal: 720 } };
+    if (selectedDeviceId) videoSettings.deviceId = { exact: selectedDeviceId };
+    stream = await navigator.mediaDevices.getUserMedia({ video: videoSettings, audio: false });
 
-cameraStarted =
-false;
+    const video = document.getElementById('video');
+    video.srcObject = stream;
+    video.style.display = 'block';
+    await video.play();
+    await waitForVideoFrame(video);
 
-status.className =
-'status error';
-
-
-if(
-error.name === 'NotAllowedError'
-) {
-
-status.textContent =
-'❌ Camera permission was denied. Please allow camera access and reload the page.';
-
+    // Device labels become available after camera permission is granted.
+    try { await populateCameras(); } catch (error) {
+      console.warn('The camera list could not be refreshed: ' + error.message);
+    }
+    document.getElementById('placeholder').style.display = 'none';
+    document.getElementById('captureBtn').style.display = 'inline-block';
+    enableBtn.style.display = 'none';
+    const track = stream.getVideoTracks()[0];
+    setStatus('Camera ready: ' + (track.label || 'Selected camera') +
+      '. Position the applicant and click "Take Photo".', 'success');
+  } catch (error) {
+    stopCamera();
+    enableBtn.style.display = 'inline-block';
+    document.getElementById('placeholder').style.display = 'block';
+    showCameraError(getCameraErrorMessage(error));
+  } finally {
+    starting = false;
+    enableBtn.disabled = false;
+    cameraSelect.disabled = cameraSelect.options.length < 2;
+  }
 }
 
-else if(
-error.name === 'NotFoundError'
-) {
-
-status.textContent =
-'❌ No camera was found.';
-
+function waitForVideoFrame(video) {
+  return new Promise(function(resolve, reject) {
+    function ready() {
+      return video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0;
+    }
+    if (ready()) { resolve(); return; }
+    const timeout = setTimeout(function() {
+      cleanup();
+      reject(new Error('The camera has not produced a frame. Reconnect it and click Enable Camera again.'));
+    }, 12000);
+    function cleanup() {
+      clearTimeout(timeout);
+      video.removeEventListener('loadeddata', check);
+      video.removeEventListener('canplay', check);
+      video.removeEventListener('resize', check);
+    }
+    function check() {
+      if (ready()) { cleanup(); resolve(); }
+    }
+    video.addEventListener('loadeddata', check);
+    video.addEventListener('canplay', check);
+    video.addEventListener('resize', check);
+    check();
+  });
 }
 
-else if(
-error.name === 'NotReadableError'
-) {
-
-status.textContent =
-'❌ Camera is being used by another application.';
-
+async function populateCameras() {
+  const devices = await navigator.mediaDevices.enumerateDevices();
+  const select = document.getElementById('cameraSelect');
+  const selectedTrack = stream && stream.getVideoTracks()[0];
+  const selectedId = selectedTrack ? selectedTrack.getSettings().deviceId : select.value;
+  select.replaceChildren();
+  const cameras = devices.filter(function(device) { return device.kind === 'videoinput'; });
+  cameras.forEach(function(device, index) {
+    const option = document.createElement('option');
+    option.value = device.deviceId;
+    option.textContent = device.label || 'Camera ' + (index + 1);
+    select.appendChild(option);
+  });
+  if (cameras.some(function(device) { return device.deviceId === selectedId; })) {
+    select.value = selectedId;
+  }
+  select.disabled = cameras.length < 2;
 }
 
-else {
-
-status.textContent =
-'❌ Camera error: ' +
-error.message;
-
+function jpegByteLength(dataUrl) {
+  if (!/^data:image\/jpeg;base64,/.test(dataUrl)) throw new Error('The browser could not create a JPEG photo.');
+  const data = dataUrl.slice(dataUrl.indexOf(',') + 1);
+  return data.length * 3 / 4 - (data.endsWith('==') ? 2 : data.endsWith('=') ? 1 : 0);
 }
-
-}
-
-}
-
-
-/* =====================================================
-   CAPTURE PHOTO
-   ===================================================== */
 
 function capturePhoto() {
+  if (starting || saving) return;
+  const video = document.getElementById('video');
+  if (!stream || video.readyState < 2 || !video.videoWidth || !video.videoHeight) {
+    setStatus('Wait for the camera preview, then take the photo again.', 'warning');
+    return;
+  }
+  try {
+    const canvas = document.getElementById('canvas');
+    const scale = Math.min(1, PHOTO_CAPTURE.maxEdge / video.videoWidth,
+      PHOTO_CAPTURE.maxEdge / video.videoHeight);
+    canvas.width = Math.max(1, Math.round(video.videoWidth * scale));
+    canvas.height = Math.max(1, Math.round(video.videoHeight * scale));
+    const context = canvas.getContext('2d');
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = 'high';
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-if(
-!cameraStarted ||
-!stream
-) {
-
-status.className =
-'status error';
-
-status.textContent =
-'❌ Camera is not active.';
-
-return;
-
+    // Resize the actual pixels BEFORE encoding/sending, for laptop and USB cameras.
+    let encoded = '';
+    for (const quality of [0.85, 0.75, 0.65, 0.55]) {
+      encoded = canvas.toDataURL('image/jpeg', quality);
+      if (jpegByteLength(encoded) <= PHOTO_CAPTURE.maxBytes) break;
+    }
+    if (jpegByteLength(encoded) > PHOTO_CAPTURE.maxBytes) {
+      throw new Error('The photo is still too large to save. Retake it using a lower camera resolution.');
+    }
+    capturedImage = encoded;
+    const preview = document.getElementById('preview');
+    preview.src = capturedImage;
+    preview.style.display = 'block';
+    video.style.display = 'none';
+    document.getElementById('captureBtn').style.display = 'none';
+    document.getElementById('retakeBtn').style.display = 'inline-block';
+    document.getElementById('saveBtn').style.display = 'inline-block';
+    document.getElementById('cameraSelect').disabled = true;
+    stopCamera();
+    setStatus('Photo captured. Review it, then click "Save Photo".', 'success');
+  } catch (error) {
+    capturedImage = null;
+    setStatus(error.message, 'error');
+  }
 }
 
-
-if(
-video.videoWidth === 0 ||
-video.videoHeight === 0
-) {
-
-status.className =
-'status error';
-
-status.textContent =
-'❌ Camera is still loading. Please try again.';
-
-return;
-
+async function retakePhoto() {
+  if (saving) return;
+  await enableCamera();
 }
-
-
-canvas.width =
-video.videoWidth;
-
-canvas.height =
-video.videoHeight;
-
-
-const context =
-canvas.getContext('2d');
-
-
-/*
- * Mirror image.
- */
-
-context.save();
-
-context.translate(
-canvas.width,
-0
-);
-
-context.scale(
--1,
-1
-);
-
-context.drawImage(
-video,
-0,
-0,
-canvas.width,
-canvas.height
-);
-
-context.restore();
-
-
-capturedImage =
-canvas.toDataURL(
-'image/jpeg',
-0.90
-);
-
-
-preview.src =
-capturedImage;
-
-preview.style.display =
-'block';
-
-video.style.display =
-'none';
-
-
-stopCamera();
-
-
-hideButton(enableButton);
-
-hideButton(captureButton);
-
-showButton(retakeButton);
-
-showButton(saveButton);
-
-
-status.className =
-'status success';
-
-status.textContent =
-'Photo captured. Review the photo before saving.';
-
-}
-
-
-/* =====================================================
-   RETAKE PHOTO
-   ===================================================== */
-
-function retakePhoto() {
-
-console.log(
-'RETAKE BUTTON CLICKED'
-);
-
-
-if(isSaving) {
-
-return;
-
-}
-
-
-capturedImage =
-null;
-
-
-preview.src =
-'';
-
-preview.style.display =
-'none';
-
-
-successBox.style.display =
-'none';
-
-saving.style.display =
-'none';
-
-
-hideButton(retakeButton);
-
-hideButton(saveButton);
-
-hideButton(captureButton);
-
-
-status.className =
-'status info';
-
-status.textContent =
-'Starting camera again...';
-
-
-startCamera();
-
-}
-
-
-/* =====================================================
-   SAVE PHOTO
-   ===================================================== */
 
 function savePhoto() {
-
-console.log(
-'SAVE BUTTON CLICKED'
-);
-
-
-if(isSaving) {
-
-return;
-
+  if (saving) return;
+  let form;
+  try {
+    const endpoint = validateDestination();
+    if (!capturedImage) throw new Error('Take a photo before saving.');
+    if (jpegByteLength(capturedImage) > PHOTO_CAPTURE.maxBytes) {
+      throw new Error('The photo is too large. Retake it before saving.');
+    }
+    saving = true;
+    ['saveBtn', 'retakeBtn', 'cancelBtn', 'cameraSelect'].forEach(function(id) {
+      document.getElementById(id).disabled = true;
+    });
+    document.getElementById('loading').style.display = 'block';
+    setStatus('Saving photo. Please wait for the result page.', 'info');
+    form = document.createElement('form');
+    form.method = 'POST';
+    form.action = endpoint;
+    form.target = '_self';
+    form.enctype = 'application/x-www-form-urlencoded';
+    form.style.display = 'none';
+    const fields = { base64Data: capturedImage, spreadsheetId, sheetName, applicantName };
+    Object.keys(fields).forEach(function(name) {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = name;
+      input.value = fields[name];
+      form.appendChild(input);
+    });
+    document.body.appendChild(form);
+    // Browser navigation displays the real doPost result; no optimistic success message.
+    form.submit();
+  } catch (error) {
+    if (form) form.remove();
+    saving = false;
+    ['saveBtn', 'retakeBtn', 'cancelBtn'].forEach(function(id) {
+      document.getElementById(id).disabled = false;
+    });
+    document.getElementById('loading').style.display = 'none';
+    setStatus(error.message, 'error');
+  }
 }
-
-
-if(!capturedImage) {
-
-status.className =
-'status error';
-
-status.textContent =
-'❌ Please take a photo first.';
-
-return;
-
-}
-
-
-if(!spreadsheetId) {
-
-status.className =
-'status error';
-
-status.textContent =
-'❌ Spreadsheet ID is missing.';
-
-return;
-
-}
-
-
-if(!APPS_SCRIPT_URL) {
-
-status.className =
-'status error';
-
-status.textContent =
-'❌ Apps Script URL is missing.';
-
-return;
-
-}
-
-
-isSaving =
-true;
-
-
-saveButton.disabled =
-true;
-
-retakeButton.disabled =
-true;
-
-
-saving.style.display =
-'block';
-
-successBox.style.display =
-'none';
-
-
-status.className =
-'status info';
-
-status.textContent =
-'Uploading photo to Google Drive...';
-
-
-/*
- * Put values into form.
- */
-
-document.getElementById(
-'base64Data'
-).value =
-capturedImage;
-
-document.getElementById(
-'spreadsheetId'
-).value =
-spreadsheetId;
-
-document.getElementById(
-'sheetName'
-).value =
-sheetName;
-
-document.getElementById(
-'formApplicantName'
-).value =
-applicantName;
-
-
-uploadForm.action =
-APPS_SCRIPT_URL;
-
-
-/*
- * Submit to Apps Script.
- */
-
-try {
-
-uploadForm.submit();
-
-}
-
-catch(error) {
-
-console.error(error);
-
-saving.style.display =
-'none';
-
-saveButton.disabled =
-false;
-
-retakeButton.disabled =
-false;
-
-isSaving =
-false;
-
-status.className =
-'status error';
-
-status.textContent =
-'❌ Upload failed: ' +
-error.message;
-
-return;
-
-}
-
-
-/*
- * Apps Script receives the request.
- *
- * Because the response is inside a hidden iframe,
- * wait for the iframe load event.
- */
-
-let completed = false;
-
-
-const uploadFrame =
-document.getElementById(
-'uploadFrame'
-);
-
-
-function uploadFinished() {
-
-if(completed) {
-
-return;
-
-}
-
-completed =
-true;
-
-
-saving.style.display =
-'none';
-
-
-successBox.style.display =
-'block';
-
-
-status.className =
-'status success';
-
-status.textContent =
-'✅ Photo saved successfully to Google Drive.';
-
-
-isSaving =
-false;
-
-}
-
-
-uploadFrame.onload =
-function() {
-
-setTimeout(
-uploadFinished,
-500
-);
-
-};
-
-
-/*
- * Safety fallback.
- *
- * If iframe load event is blocked,
- * show result after 8 seconds.
- */
-
-setTimeout(
-function() {
-
-if(!completed) {
-
-uploadFinished();
-
-}
-
-},
-8000
-);
-
-}
-
-
-/* =====================================================
-   STOP CAMERA
-   ===================================================== */
 
 function stopCamera() {
-
-if(stream) {
-
-stream
-.getTracks()
-.forEach(
-function(track) {
-
-track.stop();
-
-}
-);
-
+  if (stream) stream.getTracks().forEach(function(track) { track.stop(); });
+  stream = null;
+  const video = document.getElementById('video');
+  video.srcObject = null;
+  video.style.display = 'none';
 }
 
-stream =
-null;
-
-cameraStarted =
-false;
-
-
-try {
-
-video.srcObject =
-null;
-
+function getCameraErrorMessage(error) {
+  switch (error && error.name) {
+    case 'NotAllowedError':
+    case 'PermissionDeniedError':
+      return 'Allow camera access for this page in your browser, then try again.';
+    case 'NotFoundError':
+    case 'DevicesNotFoundError':
+      return 'The selected camera is unavailable. Reconnect the USB camera or choose another camera.';
+    case 'NotReadableError':
+    case 'TrackStartError':
+      return 'The camera could not start. Close other apps using it, then try again.';
+    case 'OverconstrainedError':
+      return 'The selected camera is unavailable or does not support the requested settings. Reconnect it or choose another camera.';
+    default:
+      return error && error.message ? error.message : 'The camera could not start.';
+  }
 }
 
-catch(error) {
-
-console.log(error);
-
+function showCameraError(message) {
+  setStatus(message, 'error');
+  document.getElementById('helpBox').style.display = 'block';
+  document.getElementById('errorCode').textContent = message;
 }
 
+function hideHelp() {
+  document.getElementById('helpBox').style.display = 'none';
 }
 
-
-/* =====================================================
-   CLOSE
-   ===================================================== */
-
-function closePage() {
-
-stopCamera();
-
-
-try {
-
-window.close();
-
+function setStatus(message, type) {
+  const status = document.getElementById('status');
+  status.textContent = message;
+  status.className = 'status ' + (type || 'info');
 }
 
-catch(error) {
-
-console.log(error);
-
+function cancelPage() {
+  if (saving) return;
+  stopCamera();
+  window.close();
+  setStatus('The camera is closed. You may close this tab and return to the applicant form.', 'info');
 }
 
-
-setTimeout(
-function() {
-
-if(
-window.history.length > 1
-) {
-
-window.history.back();
-
-}
-
-},
-300
-);
-
-}
-
-
-/* =====================================================
-   PAGE EXIT
-   ===================================================== */
-
-window.addEventListener(
-'beforeunload',
-function() {
-
-stopCamera();
-
-}
-);
-
-
-/* =====================================================
-   DEBUG
-   ===================================================== */
-
-console.log(
-'Applicant Camera Loaded'
-);
-
-console.log(
-'Applicant:',
-applicantName
-);
-
-console.log(
-'Spreadsheet:',
-spreadsheetId
-);
-
-console.log(
-'Sheet:',
-sheetName
-);
-
-console.log(
-'Apps Script:',
-APPS_SCRIPT_URL
-);
+window.addEventListener('pagehide', stopCamera);
+window.addEventListener('pageshow', function(event) {
+  if (!event.persisted) return;
+  saving = false;
+  document.getElementById('loading').style.display = 'none';
+  ['saveBtn', 'retakeBtn', 'cancelBtn'].forEach(function(id) {
+    document.getElementById(id).disabled = false;
+  });
+  setStatus('Check the applicant form before saving this photo again. Use Retake for a new photo.', 'warning');
+});
 
 </script>
-
 </body>
 </html>
