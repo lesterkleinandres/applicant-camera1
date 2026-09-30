@@ -279,7 +279,7 @@
     <select id="cameraSelect" onchange="enableCamera()" disabled>
       <option value="">Enable camera to see available devices</option>
     </select>
-    <p>Select your USB webcam or laptop camera. Center your face and shoulders inside the square for your 2 × 2 photo.</p>
+    <p>The camera starts automatically after browser permission. Your camera choice is remembered on this browser. Center your face and shoulders inside the square.</p>
   </div>
   <!-- CAMERA AREA -->
 
@@ -453,6 +453,16 @@ const applicantName = params.get('applicantName') || 'Applicant';
 const appsScriptUrl = params.get('appsScriptUrl') || '';
 const PHOTO_CAPTURE = Object.freeze({ maxEdge: 800, maxBytes: 1200000 });
 
+const CAMERA_STORAGE_KEY = 'tipon.preferredCamera';
+function readPreferredCamera() {
+  try { return localStorage.getItem(CAMERA_STORAGE_KEY) || ''; } catch (_) { return ''; }
+}
+function rememberCamera(id) {
+  try {
+    if (id) localStorage.setItem(CAMERA_STORAGE_KEY, id);
+    else localStorage.removeItem(CAMERA_STORAGE_KEY);
+  } catch (_) { /* Camera works even when browser storage is unavailable. */ }
+}
 let stream = null;
 let capturedImage = null;
 let starting = false;
@@ -462,7 +472,7 @@ window.addEventListener('load', function() {
   document.getElementById('applicantName').textContent = applicantName;
   try {
     validateDestination();
-    setStatus('Click "Enable Camera", then select the camera you want to use.', 'info');
+    enableCamera();
   } catch (error) {
     document.getElementById('enableBtn').disabled = true;
     setStatus(error.message, 'error');
@@ -492,7 +502,7 @@ async function enableCamera() {
   capturedImage = null;
   const enableBtn = document.getElementById('enableBtn');
   const cameraSelect = document.getElementById('cameraSelect');
-  const selectedDeviceId = cameraSelect.value;
+  const selectedDeviceId = cameraSelect.value || readPreferredCamera();
   enableBtn.disabled = true;
   cameraSelect.disabled = true;
   document.getElementById('captureBtn').style.display = 'none';
@@ -508,7 +518,15 @@ async function enableCamera() {
     }
     const videoSettings = { width: { ideal: 1280 }, height: { ideal: 720 } };
     if (selectedDeviceId) videoSettings.deviceId = { exact: selectedDeviceId };
-    stream = await navigator.mediaDevices.getUserMedia({ video: videoSettings, audio: false });
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: videoSettings, audio: false });
+    } catch (error) {
+      // A disconnected or reset remembered device must not block other cameras.
+      if (!selectedDeviceId || !['OverconstrainedError', 'NotFoundError', 'DevicesNotFoundError'].includes(error.name)) throw error;
+      rememberCamera('');
+      delete videoSettings.deviceId;
+      stream = await navigator.mediaDevices.getUserMedia({ video: videoSettings, audio: false });
+    }
 
     const video = document.getElementById('video');
     video.srcObject = stream;
@@ -524,6 +542,7 @@ async function enableCamera() {
     document.getElementById('captureBtn').style.display = 'inline-block';
     enableBtn.style.display = 'none';
     const track = stream.getVideoTracks()[0];
+    rememberCamera(track.getSettings().deviceId || '');
     setStatus('Camera ready: ' + (track.label || 'Selected camera') +
       '. Position the applicant and click "Take Photo".', 'success');
   } catch (error) {
