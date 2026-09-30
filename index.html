@@ -467,6 +467,34 @@ let stream = null;
 let capturedImage = null;
 let starting = false;
 let saving = false;
+let pendingRequest = '';
+let resultTimer = null;
+let saveFrame = null;
+window.addEventListener('message', function(event) {
+  if (!saving || !pendingRequest) return;
+  const trustedOrigin = /^https:\/\/[a-z0-9-]+\.script\.googleusercontent\.com$/.test(event.origin) ||
+    event.origin === 'https://script.google.com';
+  const data = event.data;
+  if (!trustedOrigin || !data || data.type !== 'TIPON_PHOTO_RESULT' || data.requestId !== pendingRequest) return;
+  clearTimeout(resultTimer);
+  pendingRequest = '';
+  document.getElementById('loading').style.display = 'none';
+  saving = false;
+  document.getElementById('cancelBtn').disabled = false;
+  if (data.success === true) {
+    capturedImage = null;
+    document.getElementById('saveBtn').style.display = 'none';
+    document.getElementById('retakeBtn').style.display = 'none';
+    setStatus(data.message, data.canClose ? 'success' : 'warning');
+    if (data.canClose === true) setTimeout(function() {
+      window.close();
+      setStatus('Photo saved and inserted. You may close this tab and return to the applicant form.', 'success');
+    }, 1000);
+  } else {
+    document.getElementById('retakeBtn').disabled = false;
+    setStatus(data.message + ' Check the applicant form before taking another photo.', 'error');
+  }
+});
 
 window.addEventListener('load', function() {
   document.getElementById('applicantName').textContent = applicantName;
@@ -675,14 +703,23 @@ function savePhoto() {
       document.getElementById(id).disabled = true;
     });
     document.getElementById('loading').style.display = 'block';
-    setStatus('Saving photo. Please wait for the result page.', 'info');
+    setStatus('Saving photo. Keep this tab open until confirmation.', 'info');
     form = document.createElement('form');
     form.method = 'POST';
     form.action = endpoint;
-    form.target = '_self';
+    pendingRequest = Array.from(crypto.getRandomValues(new Uint8Array(16)), function(b) {
+      return b.toString(16).padStart(2, '0');
+    }).join('');
+    if (saveFrame) saveFrame.remove();
+    saveFrame = document.createElement('iframe');
+    saveFrame.name = 'tiponSave_' + pendingRequest;
+    saveFrame.title = 'Photo save result';
+    saveFrame.style.display = 'none';
+    document.body.appendChild(saveFrame);
+    form.target = saveFrame.name;
     form.enctype = 'application/x-www-form-urlencoded';
     form.style.display = 'none';
-    const fields = { base64Data: capturedImage, spreadsheetId, sheetName, applicantName };
+    const fields = { base64Data: capturedImage, spreadsheetId, sheetName, applicantName, cameraRequestId: pendingRequest };
     Object.keys(fields).forEach(function(name) {
       const input = document.createElement('input');
       input.type = 'hidden';
@@ -691,10 +728,19 @@ function savePhoto() {
       form.appendChild(input);
     });
     document.body.appendChild(form);
-    // Browser navigation displays the real doPost result; no optimistic success message.
+    // An iframe load is NOT confirmation: wait for the matching server message.
+    resultTimer = setTimeout(function() {
+      document.getElementById('loading').style.display = 'none';
+      saveFrame.style.display = 'block';
+      saveFrame.style.width = '100%';
+      saveFrame.style.height = '400px';
+      setStatus('Save confirmation has not arrived. Check the result below and the applicant form before trying again. Do not submit the photo again yet.', 'warning');
+    }, 90000);
     form.submit();
   } catch (error) {
     if (form) form.remove();
+    clearTimeout(resultTimer);
+    pendingRequest = "";
     saving = false;
     ['saveBtn', 'retakeBtn', 'cancelBtn'].forEach(function(id) {
       document.getElementById(id).disabled = false;
