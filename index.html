@@ -470,18 +470,36 @@ let saving = false;
 let pendingRequest = '';
 let resultTimer = null;
 let saveFrame = null;
+
+function isTrustedSaveReply(event) {
+  // HtmlService uses both script.googleusercontent.com and generated
+  // <id>-script.googleusercontent.com origins. Validate the actual save frame too.
+  const allowedOrigin = /^https:\/\/(?:script\.google\.com|script\.googleusercontent\.com|[a-z0-9-]+[.-]script\.googleusercontent\.com)$/.test(event.origin);
+  if (!allowedOrigin || !saveFrame || !event.source) return false;
+  try {
+    let source = event.source;
+    for (let level = 0; source && level < 8; level++) {
+      if (source === saveFrame.contentWindow) return true;
+      const parent = source.parent;
+      if (!parent || parent === source) break;
+      source = parent;
+    }
+  } catch (_) { /* An unverified source must never confirm a save. */ }
+  return false;
+}
+
 window.addEventListener('message', function(event) {
   if (!saving || !pendingRequest) return;
-  const trustedOrigin = /^https:\/\/[a-z0-9-]+\.script\.googleusercontent\.com$/.test(event.origin) ||
-    event.origin === 'https://script.google.com';
   const data = event.data;
-  if (!trustedOrigin || !data || data.type !== 'TIPON_PHOTO_RESULT' || data.requestId !== pendingRequest) return;
+  if (!isTrustedSaveReply(event) || !data || data.type !== 'TIPON_PHOTO_RESULT' ||
+      data.requestId !== pendingRequest || typeof data.success !== 'boolean') return;
   clearTimeout(resultTimer);
   pendingRequest = '';
   document.getElementById('loading').style.display = 'none';
   saving = false;
   document.getElementById('cancelBtn').disabled = false;
   if (data.success === true) {
+    saveFrame.style.display = 'none';
     capturedImage = null;
     document.getElementById('saveBtn').style.display = 'none';
     document.getElementById('retakeBtn').style.display = 'none';
@@ -669,6 +687,8 @@ function capturePhoto() {
     }
     capturedImage = encoded;
     const preview = document.getElementById('preview');
+    document.getElementById('saveBtn').disabled = false;
+    document.getElementById('retakeBtn').disabled = false;
     preview.src = capturedImage;
     preview.style.display = 'block';
     video.style.display = 'none';
@@ -734,8 +754,8 @@ function savePhoto() {
       saveFrame.style.display = 'block';
       saveFrame.style.width = '100%';
       saveFrame.style.height = '400px';
-      setStatus('Save confirmation has not arrived. Check the result below and the applicant form before trying again. Do not submit the photo again yet.', 'warning');
-    }, 90000);
+      setStatus('Still waiting for save confirmation. Check the result below and the applicant form. Do not submit the photo again while this save is pending.', 'warning');
+    }, 15000);
     form.submit();
   } catch (error) {
     if (form) form.remove();
