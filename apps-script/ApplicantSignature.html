@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <style>
+    body{font:14px Arial,sans-serif;margin:0;padding:16px;text-align:center;background:#f5f7f8;color:#173b57}
+    h2{margin:0 0 8px;font-size:23px}.applicant{color:#526677;margin-bottom:12px}
+    canvas{display:block;width:min(100%,490px);height:auto;margin:12px auto;background:white;border:2px solid #173b57;border-radius:9px;touch-action:none;cursor:crosshair}
+    button{border:0;border-radius:8px;padding:11px 16px;margin:4px;font:600 14px Arial;cursor:pointer;background:#173b57;color:white}
+    button:disabled{opacity:.45;cursor:default}.secondary{background:#dfe7ed;color:#173b57}.save{background:#188038}
+    #status{min-height:38px;margin:10px 0 0;line-height:1.4;color:#526677}.help{font-size:12px;color:#627587;margin:6px 0}
+  </style>
+</head>
+<body>
+  <h2>Applicant Signature</h2>
+  <div class="applicant">Applicant: <strong id="applicant"><?= applicantName ?></strong></div>
+  <button id="wacom" type="button">Wacom STU-540</button>
+  <p class="help">Use the signature pad, or sign below using a mouse, pen, or touch screen.</p>
+  <canvas id="signaturePad" width="840" height="480" aria-label="Signature drawing area"></canvas>
+  <div>
+    <button id="clear" class="secondary" type="button">Clear</button>
+    <button id="save" class="save" type="button" disabled>Save Signature</button>
+    <button id="cancel" class="secondary" type="button">Cancel</button>
+  </div>
+  <div id="status" role="status" aria-live="polite">Please sign inside the box.</div>
+<script>
+'use strict';
+(() => {
+  const $ = id => document.getElementById(id);
+  const canvas = $('signaturePad'), ctx = canvas.getContext('2d');
+  const applicantName = $('applicant').textContent.trim();
+  const captureUrl = 'https://lesterkleinandres.github.io/applicant-camera1/signature/';
+  const captureOrigin = new URL(captureUrl).origin;
+  let drawing = false, hasSignature = false, saving = false, completed = false, submitted = false;
+  let popup = null, session = null, popupTimer, closeTimer, saveTimer;
+  function nonce() {return Array.from(crypto.getRandomValues(new Uint8Array(16)), n => n.toString(16).padStart(2, '0')).join('');}
+  let manualRequestId = nonce();
+  function status(message) {$('status').textContent = message;}
+  function controls() {
+    const busy = saving || completed;
+    $('wacom').disabled = busy; $('clear').disabled = busy;
+    $('save').disabled = busy || submitted || !!session || !hasSignature;
+    $('cancel').disabled = saving;
+  }
+  function clearSignature() {
+    if (saving || completed) return;
+    if (popup && !popup.closed) popup.close();
+    popup = null; session = null; clearInterval(popupTimer);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawing = false; hasSignature = false; submitted = false; manualRequestId = nonce();
+    controls(); status('Signature cleared. Please sign again.');
+  }
+  function position(event) {const r = canvas.getBoundingClientRect(); return {x:(event.clientX - r.left) * canvas.width / r.width, y:(event.clientY - r.top) * canvas.height / r.height};}
+  canvas.addEventListener('pointerdown', event => {
+    if (saving || completed || session || submitted || event.button > 0) return;
+    event.preventDefault(); drawing = true; hasSignature = true;
+    canvas.setPointerCapture(event.pointerId);
+    const p = position(event); ctx.strokeStyle = '#000'; ctx.fillStyle = '#000'; ctx.lineWidth = 3.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.beginPath(); ctx.arc(p.x, p.y, 1.75, 0, Math.PI * 2); ctx.fill(); ctx.beginPath(); ctx.moveTo(p.x, p.y); controls();
+  });
+  canvas.addEventListener('pointermove', event => {if (!drawing) return; const p = position(event); ctx.lineTo(p.x, p.y); ctx.stroke();});
+  for (const name of ['pointerup', 'pointercancel', 'lostpointercapture']) canvas.addEventListener(name, () => {drawing = false;});
+  function reply(success, message) {
+    if (popup && !popup.closed && session) popup.postMessage({type:'TIPON_STU_RESULT', requestId:session, success, message}, captureOrigin);
+  }
+  function saveSignature(data = canvas.toDataURL('image/png'), requestId = manualRequestId) {
+    if (saving || completed || submitted || !hasSignature) return;
+    saving = true; submitted = true; drawing = false; controls(); status('Saving signature and synchronizing forms…');
+    saveTimer = setTimeout(() => status('Still waiting for save confirmation. Keep this dialog open and do not submit again.'), 20000);
+    google.script.run.withSuccessHandler(result => {
+      clearTimeout(saveTimer);
+      if (!result || result.success !== true) {failed(new Error('The save did not confirm success.')); return;}
+      saving = false; completed = true; controls(); status('Signature saved and synchronized.');
+      reply(true, 'Signature saved and synchronized.');
+      closeTimer = setTimeout(() => google.script.host.close(), session ? 6000 : 800);
+    }).withFailureHandler(failed).saveApplicantSignatureFromDevice(data, applicantName, requestId);
+  }
+  function failed(error) {
+    clearTimeout(saveTimer); saving = false; controls();
+    const message = error && error.message ? error.message : String(error);
+    status(message + ' Check the form before using Clear to start another capture.'); reply(false, message);
+  }
+  function openWacom() {
+    if (saving || completed) return;
+    if (popup && !popup.closed) {popup.focus(); return;}
+    session = nonce(); submitted = false;
+    const url = new URL(captureUrl); url.hash = new URLSearchParams({session, parentOrigin:location.origin}).toString();
+    popup = window.open(url.href, 'TIPON_STU_' + session, 'popup,width=1000,height=800');
+    if (!popup) {session = null; controls(); status('Allow pop-ups for this Google Sheets page, then choose Wacom STU-540 again.'); return;}
+    controls(); status('Continue in the Wacom window. Keep this dialog open until saving finishes.');
+    clearInterval(popupTimer);
+    popupTimer = setInterval(() => {
+      if (popup && popup.closed && !saving && !completed) {clearInterval(popupTimer); popup = null; session = null; controls(); status('Wacom window closed. Choose Wacom STU-540 to capture again.');}
+    }, 1000);
+  }
+  window.addEventListener('message', event => {
+    const message = event.data;
+    if (!session || event.origin !== captureOrigin || event.source !== popup || !message || message.requestId !== session) return;
+    if (message.type === 'TIPON_STU_READY' && !saving && !completed) {
+      popup.postMessage({type:'TIPON_STU_INIT', requestId:session, applicantName}, captureOrigin);
+    } else if (message.type === 'TIPON_STU_SIGNATURE' && !saving && !submitted && !completed) {
+      const data = message.dataUrl;
+      if (typeof data !== 'string' || data.length > 1600000 || !/^data:image\/png;base64,[A-Za-z0-9+/]+={0,2}$/.test(data)) {reply(false, 'Invalid signature image. Please capture it again.'); return;}
+      // Mark a transfer in progress before image decoding to ignore duplicate messages.
+      submitted = true;
+      const expectedSession = session;
+      const image = new Image();
+      image.onload = () => {
+        if (session !== expectedSession || saving || completed) return;
+        if (image.naturalWidth !== 840 || image.naturalHeight !== 480) {reply(false, 'Unexpected signature size. Please reopen the Wacom window.'); return;}
+        ctx.clearRect(0, 0, 840, 480); ctx.drawImage(image, 0, 0); hasSignature = true; submitted = false;
+        saveSignature(data, expectedSession);
+      };
+      image.onerror = () => {if (session === expectedSession) {reply(false, 'Could not read the signature image. Please reopen the Wacom window.'); status('Could not read the signature. Choose Clear before another capture.');}};
+      image.src = data;
+    } else if (message.type === 'TIPON_STU_ACK' && completed) {clearTimeout(closeTimer); google.script.host.close();}
+    else if (message.type === 'TIPON_STU_CANCEL' && !saving && !completed) {session = null; popup = null; clearInterval(popupTimer); controls(); status('Wacom capture cancelled.');}
+  });
+  $('wacom').addEventListener('click', openWacom);
+  $('clear').addEventListener('click', clearSignature);
+  $('save').addEventListener('click', () => saveSignature());
+  $('cancel').addEventListener('click', () => {if (saving) return; if (popup && !popup.closed) popup.close(); google.script.host.close();});
+  controls();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>TIPON — Wacom Signature</title>
+  <link rel="stylesheet" href="signature.css">
+  <script defer src="signature.js"></script>
+</head>
+<body>
+<main>
+  <header><span class="brand">TIPON</span><span class="device">Wacom STU-540</span></header>
+  <h1>Applicant signature</h1>
+  <p id="applicant">Open this window from Capture Signature in the TIPON form.</p>
+  <div class="toolbar">
+    <button id="connect" disabled>Connect signature pad</button>
+    <span id="connection">Not connected</span>
+  </div>
+  <div class="paper"><canvas id="preview" width="800" height="480" aria-label="Signature preview"></canvas></div>
+  <p id="status" role="status" aria-live="polite">Waiting for the TIPON form…</p>
+  <div class="actions">
+    <button id="clear" class="secondary" disabled>Clear</button>
+    <button id="save" class="save" disabled>Save Signature</button>
+    <button id="cancel" class="secondary">Cancel</button>
+  </div>
+  <details>
+    <summary>First-time setup or connection help</summary>
+    <ol>
+      <li>Connect the STU-540 to this Windows laptop by USB.</li>
+      <li>Install Wacom STU SigCaptX for Windows from the <a href="https://developer.wacom.com/developer-dashboard" target="_blank" rel="noopener noreferrer">Wacom Developer Dashboard</a> (Wacom Device Kit → STU SDK for Windows Desktop).</li>
+      <li>Install the <a href="https://developer-support.wacom.com/hc/en-us/articles/9354527258007-STU-Driver-Installation" target="_blank" rel="noopener noreferrer">Wacom STU driver</a>, then reopen your browser if the installer asks.</li>
+      <li>Use Chrome or Edge. If asked, allow this page to connect to devices on your local network so it can reach the Wacom service on this laptop.</li>
+      <li>Close other applications using the pad. The pad must be in USB HID mode.</li>
+    </ol>
+    <p>Your signature is sent back to the TIPON form only when you choose Save Signature. Keep its signature dialog open until saving finishes.</p>
+  </details>
+  <footer>STU capture uses Wacom's STU SigCaptX SDK. <a href="vendor/WACOM-LICENSE.txt">License</a></footer>
+</main>
+</body>
+</html>
