@@ -4,15 +4,17 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="referrer" content="no-referrer">
-  <title>TIPON — Wacom Signature</title>
+  <title>TIPON — Wacom USB Signature</title>
   <link rel="stylesheet" href="signature.css">
-  <script defer src="signature.js"></script>
+  <script defer src="stu540-webhid.js?v=20261001-1"></script>
+  <script defer src="capture-webhid.js?v=20261001-1"></script>
 </head>
 <body>
 <main>
   <header><span class="brand">TIPON</span><span class="device">Wacom STU-540</span></header>
   <h1>Applicant signature</h1>
   <p id="applicant">Open this window from Capture Signature in the TIPON form.</p>
+  <p class="method">Direct USB · Chrome / Edge · No SigCaptX installation</p>
   <div class="toolbar">
     <button id="connect" disabled>Connect signature pad</button>
     <span id="connection">Not connected</span>
@@ -27,15 +29,15 @@
   <details>
     <summary>First-time setup or connection help</summary>
     <ol>
-      <li>Connect the STU-540 to this Windows laptop by USB.</li>
-      <li>Install Wacom STU SigCaptX for Windows from the <a href="https://developer.wacom.com/developer-dashboard" target="_blank" rel="noopener noreferrer">Wacom Developer Dashboard</a> (Wacom Device Kit → STU SDK for Windows Desktop).</li>
-      <li>Install the <a href="https://developer-support.wacom.com/hc/en-us/articles/9354527258007-STU-Driver-Installation" target="_blank" rel="noopener noreferrer">Wacom STU driver</a>, then reopen your browser if the installer asks.</li>
-      <li>Use Chrome or Edge. If asked, allow this page to connect to devices on your local network so it can reach the Wacom service on this laptop.</li>
-      <li>Close other applications using the pad. The pad must be in USB HID mode.</li>
+      <li>Connect the STU-540 to this Windows laptop by USB and use desktop Chrome or Edge.</li>
+      <li>Choose <strong>Connect signature pad</strong>. In the browser's device list, select the STU-540 and choose <strong>Connect</strong>.</li>
+      <li>Sign on the pad. Use <strong>Clear</strong> to start over, or <strong>Save Signature</strong> to insert the signature in the TIPON form.</li>
+      <li>If no pad appears, reconnect the USB cable and close other apps or tabs using it. The STU-540 must be in USB HID mode.</li>
+      <li>If your organisation blocks USB access in the browser, ask IT to allow this capture page to use the pad.</li>
     </ol>
     <p>Your signature is sent back to the TIPON form only when you choose Save Signature. Keep its signature dialog open until saving finishes.</p>
   </details>
-  <footer>STU capture uses Wacom's STU SigCaptX SDK. <a href="vendor/WACOM-LICENSE.txt">License</a></footer>
+  <footer>Custom WebHID integration · <a href="vendor/WEBHID-LICENSE.txt">Open-source license</a></footer>
 </main>
 </body>
 </html>
