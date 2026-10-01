@@ -1,16 +1,17 @@
-# TIPON STU-540 signature capture
+# TIPON STU-540 signature capture — direct WebHID
 
 This page is opened by the bound Google Sheets `ApplicantSignature.html` dialog. Opening it directly intentionally disables capture because there is no active applicant session.
 
 ## Windows 11 setup
 
 1. Connect the Wacom STU-540 by USB in USB HID mode.
-2. Install **STU SigCaptX for Windows** from [Wacom Developer Dashboard](https://developer.wacom.com/developer-dashboard), under Wacom Device Kit → STU SDK for Windows Desktop. Follow the official [getting-started guide](https://github.com/Wacom-Developer/stu-sdk-sigcaptx-samples/blob/master/GETTING-STARTED.md). The STU driver alone is not the SigCaptX service.
-3. Install the [Wacom STU driver](https://developer-support.wacom.com/hc/en-us/articles/9354527258007-STU-Driver-Installation). Complete any installer-requested restart or sign-out.
-4. In Chrome or Edge, open the TIPON sheet and its existing Capture Signature dialog. Choose **Wacom STU-540**, then **Connect signature pad**. Allow the requested popup and local network/device connection permission for this capture page.
-5. Sign on the pad. Choose **Save Signature** once. Keep the sheet dialog open until the save is confirmed. The capture window and dialog then close automatically.
+2. In desktop Chrome or Edge, open the TIPON sheet and its existing Capture Signature dialog. Choose **Wacom STU-540**, then **Connect signature pad**.
+3. Select the STU-540 in the browser device chooser and allow the USB connection.
+4. Sign on the pad. Choose **Save Signature** once. Keep the sheet dialog open until the save is confirmed. The capture window and dialog then close automatically.
 
-Use Wacom's included PortCheck and demo if connection fails. Close other programs using the pad. Do not disable browser certificate checks; resolve certificate/service installation problems using Wacom support.
+This version uses Windows' built-in HID support through WebHID. It does not load SigCaptX, require a separately installed Wacom STU driver, contact a localhost service, or use the paid Wacom Signature SDK. The device chooser requires a click in a secure, top-level browser page. Firefox and Safari are not supported for this USB capture.
+
+If the pad is absent or busy, close other programs/tabs using it and reconnect its USB cable. If it is configured in serial mode, it must be returned to USB HID mode using Wacom's supported procedure. An organisation's browser/device policy can also block WebHID; contact IT rather than disabling security protections.
 
 ## Apps Script installation
 
@@ -20,7 +21,7 @@ Replace only `ApplicantSignature.html` with the copy in `../apps-script/`. Add `
 - `APPLICANT_CAPTURE_CONFIG` and `getApplicantCaptureName_(sheet)`.
 - `saveApplicantSignatureCapture(dataUrl)`, returning `{success: true}` after its existing Drive save, sheet insertion, and form synchronization.
 
-The bound dialog uses saved source, so these changes do not require redeploying the photo web app. Reopen the signature dialog after saving the source.
+The bound dialog uses saved source, so these changes do not require redeploying the photo web app. The WebHID conversion only changes the GitHub capture page: the Apps Script files already installed for the popup bridge can remain as they are. Close old capture windows and reopen the signature dialog after publishing.
 
 ## Data and checks
 
@@ -30,6 +31,14 @@ Both windows validate exact origins, window references, and a random session tok
 
 Actual USB operation and final insertion must be tested on the Windows laptop with the STU-540 attached. Automated message/save-flow tests do not establish hardware compatibility on that laptop.
 
+## Automated checks
+
+From the repository root, run `node test.cjs` and `node webhid-test.cjs`. These use simulated browser/Apps Script/USB objects and perform no production writes. They cover message validation, one-time submission, save confirmation, applicant checks, USB framing, image transfers, cancellation and device cleanup.
+
 ## Vendor files
 
-`vendor/q.js` and `vendor/wgssStuSdk.js` are unmodified files from [Wacom's official STU SigCaptX sample](https://github.com/Wacom-Developer/stu-sdk-sigcaptx-samples/tree/master/samples/demobuttons). Wacom's MIT license and Q's MIT/Apache notices are retained in `vendor/`.
+`stu540-webhid.js` is adapted from [Pablo García's MIT-licensed STU-540 WebHID project](https://github.com/pabloko/Wacom-STU-WebHID), source blob `a8cab342da91312105ee685271a9d69d8a9b5659`. Its copyright and license are retained in `vendor/WEBHID-LICENSE.txt`. This is a community integration, not an official Wacom SDK. It captures a PNG image and does not implement Wacom's encrypted biometric signature formats.
+
+The adapter validates device capabilities and input lengths, decodes coordinates without modifying input buffers, sends display chunks sequentially, reports connection failures, and releases the device when cancelled or disconnected. A 1-bit display image keeps the USB transfer small; the captured PNG remains transparent with black ink. Hardware testing is still required for the specific laptop, firmware and USB connection.
+
+The previous `signature.js`, `vendor/q.js` and `vendor/wgssStuSdk.js` files and their licenses are retained for historical reference but are not loaded by the current page. Separate script filenames prevent an older cached HTML page from loading an incompatible new adapter.
