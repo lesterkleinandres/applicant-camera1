@@ -496,6 +496,8 @@ const spreadsheetId = params.get('spreadsheetId') || '';
 const sheetName = params.get('sheetName') || '01 Information + ID';
 const applicantName = params.get('applicantName') || 'Applicant';
 const appsScriptUrl = params.get('appsScriptUrl') || '';
+const cameraSession = params.get('cameraSession') || '';
+if (cameraSession && !/^[a-f0-9-]{36}$/i.test(cameraSession)) throw new Error('Invalid camera session. Reopen from the applicant form.');
 const PHOTO_CAPTURE = Object.freeze({ maxEdge: 800, maxBytes: 1200000 });
 const PHOTO_BACKGROUND = Object.freeze({
   previewEdge: 384, previewFps: 12, inferenceEdge: 256,
@@ -1007,7 +1009,7 @@ function savePhoto() {
     form.target = saveFrame.name;
     form.enctype = 'application/x-www-form-urlencoded';
     form.style.display = 'none';
-    const fields = { base64Data: capturedImage, spreadsheetId, sheetName, applicantName, cameraRequestId: pendingRequest };
+    const fields = { base64Data: capturedImage, spreadsheetId, sheetName, applicantName, cameraSession, cameraRequestId: pendingRequest };
     Object.keys(fields).forEach(function(name) {
       const input = document.createElement('input');
       input.type = 'hidden';
