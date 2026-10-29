@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="tipon-camera-version" content="2026-10-07-white-background-1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; worker-src blob:; connect-src https://cdn.jsdelivr.net https://storage.googleapis.com; img-src 'self' data: blob:; media-src 'self' blob:; style-src 'self' 'unsafe-inline'; frame-src https://script.google.com https://script.googleusercontent.com https://*.googleusercontent.com https://accounts.google.com; form-action https://script.google.com https://script.googleusercontent.com https://*.googleusercontent.com https://accounts.google.com; object-src 'none'; base-uri 'self'">
+  <base target="_top">
+
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+  <title>Applicant Photo Capture</title>
+
+  <style>
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 30px 15px;
+      background: #f4f6f8;
+      font-family: Arial, Helvetica, sans-serif;
+      color: #222;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 780px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 18px;
+      padding: 30px;
+      box-shadow: 0 5px 25px rgba(0,0,0,0.12);
+    }
+
+    .title {
+      text-align: center;
+      font-size: 34px;
+      font-weight: 700;
+      color: #174a78;
+      margin-bottom: 8px;
+    }
+
+    .applicant {
+      text-align: center;
+      font-size: 18px;
+      color: #555;
+      margin-bottom: 25px;
+    }
+
+    .applicant strong {
+      color: #222;
+    }
+
+    .camera-wrapper {
+      width: 100%;
+      background: #000;
+      border-radius: 14px;
+      overflow: hidden;
+      position: relative;
+      min-height: 420px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    video {
+      width: 100%;
+      height: auto;
+      min-height: 420px;
+      max-height: 520px;
+      object-fit: contain;
+      display: none;
+      background: #000;
+    }
+
+    canvas {
+      display: none;
+    }
+
+    .camera-placeholder {
+      color: #ddd;
+      text-align: center;
+      font-size: 20px;
+      padding: 40px;
+    }
+
+    .camera-icon {
+      font-size: 48px;
+      display: block;
+      margin-bottom: 15px;
+    }
+
+    .button-area {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
+      margin-top: 25px;
+    }
+
+    button {
+      border: none;
+      border-radius: 9px;
+      padding: 14px 28px;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+      min-width: 160px;
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .btn-camera {
+      background: #1a73e8;
+      color: white;
+    }
+
+    .btn-camera:hover {
+      background: #155fc0;
+    }
+
+    .btn-capture {
+      background: #188038;
+      color: white;
+      display: none;
+    }
+
+    .btn-retake {
+      background: #f9ab00;
+      color: white;
+      display: none;
+    }
+
+    .btn-save {
+      background: #0b8043;
+      color: white;
+      display: none;
+    }
+
+    .btn-cancel {
+      background: #d93025;
+      color: white;
+    }
+
+    .status {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 17px;
+      min-height: 25px;
+    }
+
+    .status.info {
+      color: #555;
+    }
+
+    .status.success {
+      color: #188038;
+      font-weight: bold;
+    }
+
+    .status.error {
+      color: #d93025;
+      font-weight: bold;
+    }
+
+    .status.warning {
+      color: #b06000;
+      font-weight: bold;
+    }
+
+    .help-box {
+      margin-top: 22px;
+      padding: 20px;
+      background: #fff8e1;
+      border: 1px solid #f6c453;
+      border-radius: 10px;
+      display: none;
+    }
+
+    .help-box h3 {
+      margin-top: 0;
+      color: #8a5700;
+    }
+
+    .help-box p {
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+
+    .error-code {
+      margin-top: 15px;
+      padding: 12px;
+      background: #fce8e6;
+      border-radius: 7px;
+      color: #a50e0e;
+      font-family: monospace;
+      word-break: break-word;
+    }
+
+    .preview {
+      display: none;
+      width: 100%;
+      max-height: 520px;
+      object-fit: contain;
+      background: #000;
+    }
+
+    .save-message {
+      display: none;
+      margin-top: 20px;
+      padding: 18px;
+      background: #e6f4ea;
+      border: 1px solid #34a853;
+      border-radius: 10px;
+      color: #137333;
+      text-align: center;
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      margin-top: 15px;
+      color: #555;
+    }
+
+    .small-note {
+      text-align: center;
+      color: #777;
+      font-size: 13px;
+      margin-top: 20px;
+      line-height: 1.5;
+    }
+
+    .camera-choice { margin: 0 0 20px; }
+    .camera-choice label { display: block; font-weight: bold; margin-bottom: 8px; }
+    .camera-choice select { width: 100%; padding: 12px; font-size: 16px; border: 1px solid #9ba9b6; border-radius: 8px; }
+    .camera-choice p { font-size: 14px; color: #555; margin: 8px 0 0; }
+    /* Match the live framing to the centered square that will be saved. */
+    .camera-wrapper {
+      width: 100%;
+      max-width: 520px;
+      aspect-ratio: 1 / 1;
+      min-height: 0;
+      margin: 0 auto;
+    }
+    .camera-wrapper video, .camera-wrapper .preview, .camera-wrapper #livePreview {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      max-height: none;
+      object-fit: cover;
+      object-position: center;
+    }
+  </style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="title">
+    📷 Applicant Photo
+  </div>
+
+  <div class="applicant">
+    Applicant:
+    <strong id="applicantName">Applicant</strong>
+  </div>
+
+  <div class="camera-choice">
+    <label for="cameraSelect">Camera</label>
+    <select id="cameraSelect" onchange="enableCamera()" disabled>
+      <option value="">Enable camera to see available devices</option>
+    </select>
+    <p>The camera starts automatically after browser permission. Your camera choice is remembered on this browser. Wait for the white background, then center your face and shoulders inside the square.</p>
+  </div>
+  <!-- CAMERA AREA -->
+
+  <div class="camera-wrapper">
+
+    <video
+      id="video"
+      autoplay
+      playsinline
+      muted>
+    </video>
+
+    <canvas id="canvas"></canvas>
+    <canvas id="livePreview" width="384" height="384" aria-label="Live applicant photo with a white background"></canvas>
+
+    <img
+      id="preview"
+      class="preview"
+      alt="Captured Applicant Photo">
+
+    <div
+      id="placeholder"
+      class="camera-placeholder">
+
+      <span class="camera-icon">📷</span>
+
+      <div>
+        Camera is not active
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- BUTTONS -->
+
+  <div class="button-area">
+
+    <button
+      id="enableBtn"
+      class="btn-camera"
+      onclick="enableCamera()">
+
+      📷 Enable Camera
+
+    </button>
+
+    <button
+      id="captureBtn"
+      class="btn-capture"
+      onclick="capturePhoto()">
+
+      📸 Take Photo
+
+    </button>
+
+    <button
+      id="retakeBtn"
+      class="btn-retake"
+      onclick="retakePhoto()">
+
+      🔄 Retake
+
+    </button>
+
+    <button
+      id="saveBtn"
+      class="btn-save"
+      onclick="savePhoto()">
+
+      💾 Save Photo
+
+    </button>
+
+    <button
+      id="cancelBtn"
+      class="btn-cancel"
+      onclick="cancelPage()">
+
+      ❌ Cancel
+
+    </button>
+
+  </div>
+
+  <!-- STATUS -->
+
+  <div
+    id="status"
+    role="status"
+    aria-live="polite"
+    class="status info">
+
+    Click "Enable Camera" to start the camera.
+
+  </div>
+
+  <!-- LOADING -->
+
+  <div
+    id="loading"
+    class="loading">
+
+    ⏳ Saving photo, please wait...
+
+  </div>
+
+  <!-- ERROR / HELP -->
+
+  <div
+    id="helpBox"
+    class="help-box">
+
+    <h3>Camera help</h3>
+
+    <p>
+      If the camera does not start, check its connection and browser permission.
+    </p>
+
+    <p>
+      Please check the following:
+    </p>
+
+    <p>
+      1. Make sure you are using <b>Google Chrome</b> or
+      <b>Microsoft Edge</b>.
+    </p>
+
+    <p>
+      2. Make sure your computer has a working camera.
+    </p>
+
+    <p>
+      3. In Chrome, open the camera permission settings for
+      this Web App and select <b>Allow</b>.
+    </p>
+
+    <p>
+      4. If the permission was previously blocked, reset the
+      permission and reload this page.
+    </p>
+
+    <p>
+      5. Close other applications that may already be using
+      the camera, such as Teams or Zoom.
+    </p>
+
+    <div
+      id="errorCode"
+      class="error-code">
+    </div>
+
+  </div>
+
+  <div class="small-note">
+
+    The photo will be saved to the
+    <b>Applicant Photos and Signatures</b>
+    folder and inserted into the applicant form.
+
+  </div>
+
+</div>
+
+<script id="photo-background-worker" type="text/plain">
+'use strict';
+let engine=null;
+self.onmessage=async event=>{
+  const message=event.data;
+  try{
+    if(message.command==='INIT'){
+      const started=performance.now(),config=message.config;
+      const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),60000);
+      try{
+        const [vision,modelBytes]=await Promise.all([
+          import(config.library),
+          fetch(config.model,{signal:controller.signal}).then(response=>{
+            if(!response.ok)throw new Error('Background model download failed ('+response.status+').');
+            return response.arrayBuffer();
+          })
+        ]);
+        const files=await vision.FilesetResolver.forVisionTasks(config.wasm);
+        const delegate='CPU',fallbackMessage='';
+        const options={baseOptions:{modelAssetBuffer:new Uint8Array(modelBytes),delegate},canvas:new OffscreenCanvas(1,1),runningMode:'IMAGE',outputCategoryMask:false,outputConfidenceMasks:true};
+        engine=await vision.ImageSegmenter.createFromOptions(files,options);
+        self.postMessage({id:message.id,ok:true,value:{loadMs:performance.now()-started,delegate,modelBytes:modelBytes.byteLength,labels:engine.getLabels(),fallbackMessage,execution:'worker'}});
+      }finally{clearTimeout(timer);}
+    }else if(message.command==='SEGMENT'){
+      if(!engine)throw new Error('The background remover is not ready.');
+      const started=performance.now();let maskData=null,details=null;
+      try{
+        engine.segment(message.image,result=>{
+          const masks=result.confidenceMasks;
+          if(!masks||!masks.length||masks.length>2)throw new Error('The selfie model returned an unexpected background mask.');
+          const mask=masks[masks.length===2?1:0],values=mask.getAsFloat32Array();
+          if(values.length!==mask.width*mask.height)throw new Error('The background mask size is invalid.');
+          maskData=values.slice();let sum=0;for(const value of maskData)sum+=value;
+          details={width:mask.width,height:mask.height,maskCount:masks.length,meanForegroundConfidence:sum/maskData.length};
+        });
+      }finally{message.image.close();}
+      if(!maskData)throw new Error('The background remover did not produce a mask.');
+      self.postMessage({id:message.id,ok:true,value:{mask:maskData.buffer,details,inferenceMs:performance.now()-started}},[maskData.buffer]);
+    }
+  }catch(error){self.postMessage({id:message.id,ok:false,error:String(error.message||error)});}
+};
+</script>
+<script>
+// This page is served by GitHub Pages. Send the photo with a normal form POST.
+// google.script.run and Apps Script template tags are not available here.
+const params = new URLSearchParams(window.location.hash ? window.location.hash.slice(1) : window.location.search);
+if (window.location.hash) history.replaceState(null, '', window.location.pathname + window.location.search);
+const spreadsheetId = params.get('spreadsheetId') || '';
+const sheetName = params.get('sheetName') || '01 Information + ID';
+const applicantName = params.get('applicantName') || 'Applicant';
+const appsScriptUrl = params.get('appsScriptUrl') || '';
+const cameraSession = params.get('cameraSession') || '';
+if (cameraSession && !/^[a-f0-9-]{36}$/i.test(cameraSession)) throw new Error('Invalid camera session. Reopen from the applicant form.');
+const PHOTO_CAPTURE = Object.freeze({ maxEdge: 800, maxBytes: 1200000 });
+const PHOTO_BACKGROUND = Object.freeze({
+  previewEdge: 384, previewFps: 12, inferenceEdge: 256,
+  library: 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.1.0/vision_bundle.mjs',
+  wasm: 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.1.0/wasm',
+  model: 'https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/1/selfie_segmenter.tflite'
+});
+
+const CAMERA_STORAGE_KEY = 'tipon.preferredCamera';
+function readPreferredCamera() {
+  try { return localStorage.getItem(CAMERA_STORAGE_KEY) || ''; } catch (_) { return ''; }
+}
+function rememberCamera(id) {
+  try {
+    if (id) localStorage.setItem(CAMERA_STORAGE_KEY, id);
+    else localStorage.removeItem(CAMERA_STORAGE_KEY);
+  } catch (_) { /* Camera works even when browser storage is unavailable. */ }
+}
+let stream = null;
+let capturedImage = null;
+let starting = false;
+let processing = false;
+let closed = false;
+let captureGeneration = 0;
+let previewGeneration = 0;
+let previewTimer = null;
+let previewReady = false;
+let backgroundWorker = null;
+let backgroundWorkerUrl = '';
+let backgroundPromise = null;
+let backgroundReady = false;
+let backgroundRequestId = 0;
+const backgroundRequests = new Map();
+let saving = false;
+let pendingRequest = '';
+let resultTimer = null;
+let saveFrame = null;
+
+function disposePhotoBackground(message = 'Photo background processing stopped.') {
+  backgroundReady = false;
+  backgroundPromise = null;
+  for (const request of backgroundRequests.values()) {
+    clearTimeout(request.timer);
+    request.reject(new Error(message));
+  }
+  backgroundRequests.clear();
+  if (backgroundWorker) backgroundWorker.terminate();
+  backgroundWorker = null;
+  if (backgroundWorkerUrl) URL.revokeObjectURL(backgroundWorkerUrl);
+  backgroundWorkerUrl = '';
+}
+
+function requestPhotoBackground(command, payload = {}, transfer = [], timeout = 20000) {
+  return new Promise(function(resolve, reject) {
+    if (!backgroundWorker) { reject(new Error('White background processing is unavailable.')); return; }
+    const id = ++backgroundRequestId;
+    const timer = setTimeout(function() {
+      if (!backgroundRequests.has(id)) return;
+      disposePhotoBackground('White background processing timed out. Click Enable Camera to retry.');
+    }, timeout);
+    backgroundRequests.set(id, { resolve, reject, timer });
+    try { backgroundWorker.postMessage({ id, command, ...payload }, transfer); }
+    catch (error) { backgroundRequests.delete(id); clearTimeout(timer); reject(error); }
+  });
+}
+
+async function preparePhotoBackground() {
+  if (backgroundReady) return;
+  if (backgroundPromise) return backgroundPromise;
+  backgroundPromise = (async function() {
+    if (!window.Worker || !window.OffscreenCanvas || !window.createImageBitmap) {
+      throw new Error('White background capture needs a recent Chrome or Edge browser.');
+    }
+    backgroundWorkerUrl = URL.createObjectURL(new Blob([
+      document.getElementById('photo-background-worker').textContent
+    ], { type: 'application/javascript' }));
+    const worker = new Worker(backgroundWorkerUrl);
+    backgroundWorker = worker;
+    worker.onmessage = function(event) {
+      if (worker !== backgroundWorker) return;
+      const reply = event.data;
+      if (!reply || !Number.isInteger(reply.id)) return;
+      const request = backgroundRequests.get(reply.id);
+      if (!request) return;
+      backgroundRequests.delete(reply.id);
+      clearTimeout(request.timer);
+      if (reply.ok === true) request.resolve(reply.value);
+      else request.reject(new Error(String(reply.error || 'White background processing failed.')));
+    };
+    worker.onerror = function(event) {
+      event.preventDefault();
+      if (worker === backgroundWorker) disposePhotoBackground('White background processing stopped. Click Enable Camera to retry.');
+    };
+    worker.onmessageerror = function() {
+      if (worker === backgroundWorker) disposePhotoBackground('The white background result could not be read. Click Enable Camera to retry.');
+    };
+    await requestPhotoBackground('INIT', { config: PHOTO_BACKGROUND }, [], 90000);
+    if (closed || worker !== backgroundWorker) throw new Error('The camera was closed.');
+    backgroundReady = true;
+  })().catch(function(error) {
+    disposePhotoBackground(error.message);
+    throw error;
+  });
+  return backgroundPromise;
+}
+
+function photoCanvas(width, height) {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  return canvas;
+}
+
+function cropPhotoSquare(video, maxEdge) {
+  const cropSize = Math.min(video.videoWidth, video.videoHeight);
+  if (!cropSize) throw new Error('The camera has not produced a usable photo.');
+  const outputSize = Math.min(maxEdge, cropSize);
+  const canvas = photoCanvas(outputSize, outputSize);
+  const context = canvas.getContext('2d');
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = 'high';
+  context.drawImage(video, (video.videoWidth - cropSize) / 2,
+    (video.videoHeight - cropSize) / 2, cropSize, cropSize,
+    0, 0, outputSize, outputSize);
+  return canvas;
+}
+
+async function applyWhitePhotoBackground(source) {
+  const input = photoCanvas(PHOTO_BACKGROUND.inferenceEdge, PHOTO_BACKGROUND.inferenceEdge);
+  const context = input.getContext('2d');
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = 'high';
+  context.drawImage(source, 0, 0, input.width, input.height);
+  const bitmap = await createImageBitmap(input);
+  let result;
+  try { result = await requestPhotoBackground('SEGMENT', { image: bitmap }, [bitmap]); }
+  catch (error) { bitmap.close(); throw error; }
+  const details = result && result.details;
+  if (!details || details.width !== PHOTO_BACKGROUND.inferenceEdge ||
+      details.height !== PHOTO_BACKGROUND.inferenceEdge || !(result.mask instanceof ArrayBuffer)) {
+    throw new Error('The white background mask is invalid. Retake the photo.');
+  }
+  const values = new Float32Array(result.mask);
+  if (values.length !== details.width * details.height) throw new Error('The white background mask is incomplete.');
+  const pixels = new Uint8ClampedArray(values.length * 4);
+  for (let i = 0; i < values.length; i++) {
+    if (!Number.isFinite(values[i])) throw new Error('The white background mask could not be processed.');
+    const t = Math.max(0, Math.min(1, (values[i] - 0.25) / 0.5));
+    pixels[i * 4] = pixels[i * 4 + 1] = pixels[i * 4 + 2] = 255;
+    pixels[i * 4 + 3] = Math.round(255 * t * t * (3 - 2 * t));
+  }
+  const mask = photoCanvas(details.width, details.height);
+  mask.getContext('2d').putImageData(new ImageData(pixels, details.width, details.height), 0, 0);
+  const output = photoCanvas(source.width, source.height);
+  const outputContext = output.getContext('2d');
+  outputContext.drawImage(source, 0, 0);
+  outputContext.globalCompositeOperation = 'destination-in';
+  outputContext.imageSmoothingEnabled = mask.width !== source.width || mask.height !== source.height;
+  outputContext.imageSmoothingQuality = 'high';
+  outputContext.drawImage(mask, 0, 0, source.width, source.height);
+  outputContext.globalCompositeOperation = 'destination-over';
+  outputContext.fillStyle = '#fff';
+  outputContext.fillRect(0, 0, source.width, source.height);
+  outputContext.globalCompositeOperation = 'source-over';
+  return output;
+}
+
+function pauseWhitePhotoPreview() {
+  previewGeneration++;
+  clearTimeout(previewTimer);
+  previewTimer = null;
+  previewReady = false;
+}
+
+async function startWhitePhotoPreview(expectedStream) {
+  pauseWhitePhotoPreview();
+  const generation = previewGeneration;
+  let lastVideoTime = -1;
+  async function frame() {
+    if (closed || generation !== previewGeneration || stream !== expectedStream) return;
+    const video = document.getElementById('video');
+    const startedAt = performance.now();
+    if (processing || saving || video.readyState < 2 || video.currentTime === lastVideoTime) {
+      previewTimer = setTimeout(frame, 50);
+      return;
+    }
+    lastVideoTime = video.currentTime;
+    const source = cropPhotoSquare(video, PHOTO_BACKGROUND.previewEdge);
+    const white = await applyWhitePhotoBackground(source);
+    if (closed || generation !== previewGeneration || stream !== expectedStream) return;
+    const preview = document.getElementById('livePreview');
+    preview.width = white.width;
+    preview.height = white.height;
+    preview.getContext('2d').drawImage(white, 0, 0);
+    preview.style.display = 'block';
+    video.style.display = 'none';
+    const wasReady = previewReady;
+    previewReady = true;
+    document.getElementById('captureBtn').disabled = starting || processing || saving;
+    if (!wasReady) setStatus('Camera ready with white background. Position the applicant and click "Take Photo".', 'success');
+    previewTimer = setTimeout(function() {
+      frame().catch(function(error) {
+        if (closed || generation !== previewGeneration || stream !== expectedStream) return;
+        stopCamera();
+        document.getElementById('enableBtn').style.display = 'inline-block';
+        document.getElementById('captureBtn').style.display = 'none';
+        document.getElementById('placeholder').style.display = 'block';
+        showCameraError(error.message);
+      });
+    }, Math.max(0, 1000 / PHOTO_BACKGROUND.previewFps - (performance.now() - startedAt)));
+  }
+  await frame();
+}
+
+function isTrustedSaveReply(event) {
+  // HtmlService uses both script.googleusercontent.com and generated
+  // <id>-script.googleusercontent.com origins. Validate the actual save frame too.
+  const allowedOrigin = /^https:\/\/(?:script\.google\.com|script\.googleusercontent\.com|[a-z0-9-]+[.-]script\.googleusercontent\.com)$/.test(event.origin);
+  if (!allowedOrigin || !saveFrame || !event.source) return false;
+  try {
+    let source = event.source;
+    for (let level = 0; source && level < 8; level++) {
+      if (source === saveFrame.contentWindow) return true;
+      const parent = source.parent;
+      if (!parent || parent === source) break;
+      source = parent;
+    }
+  } catch (_) { /* An unverified source must never confirm a save. */ }
+  return false;
+}
+
+window.addEventListener('message', function(event) {
+  if (!saving || !pendingRequest) return;
+  const data = event.data;
+  if (!isTrustedSaveReply(event) || !data || data.type !== 'TIPON_PHOTO_RESULT' ||
+      data.requestId !== pendingRequest || typeof data.success !== 'boolean') return;
+  clearTimeout(resultTimer);
+  pendingRequest = '';
+  document.getElementById('loading').style.display = 'none';
+  saving = false;
+  document.getElementById('cancelBtn').disabled = false;
+  if (data.success === true) {
+    saveFrame.style.display = 'none';
+    capturedImage = null;
+    document.getElementById('saveBtn').style.display = 'none';
+    document.getElementById('retakeBtn').style.display = 'none';
+    setStatus(data.message, data.canClose ? 'success' : 'warning');
+    if (data.canClose === true) setTimeout(function() {
+      window.close();
+      setStatus('Photo saved and inserted. You may close this tab and return to the applicant form.', 'success');
+    }, 1000);
+  } else {
+    document.getElementById('retakeBtn').disabled = false;
+    setStatus(data.message + ' Check the applicant form before taking another photo.', 'error');
+  }
+});
+
+window.addEventListener('load', function() {
+  document.getElementById('applicantName').textContent = applicantName;
+  try {
+    validateDestination();
+    enableCamera();
+  } catch (error) {
+    document.getElementById('enableBtn').disabled = true;
+    setStatus(error.message, 'error');
+  }
+});
+
+function validateDestination() {
+  if (!spreadsheetId || !appsScriptUrl) {
+    throw new Error('Open this camera using the camera button in the TIPON applicant form.');
+  }
+  let endpoint;
+  try { endpoint = new URL(appsScriptUrl); } catch (error) {
+    throw new Error('The camera save address is invalid. Reopen the camera from the applicant form.');
+  }
+  if (endpoint.protocol !== 'https:' || endpoint.hostname !== 'script.google.com' ||
+      !/^\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(endpoint.pathname) ||
+      endpoint.username || endpoint.password || endpoint.port || endpoint.search || endpoint.hash) {
+    throw new Error('The camera save address is invalid. Reopen the camera from the applicant form.');
+  }
+  return endpoint.href;
+}
+
+async function enableCamera() {
+  if (starting || saving || processing || closed) return;
+  starting = true;
+  hideHelp();
+  capturedImage = null;
+  const enableBtn = document.getElementById('enableBtn');
+  const cameraSelect = document.getElementById('cameraSelect');
+  const selectedDeviceId = cameraSelect.value || readPreferredCamera();
+  enableBtn.disabled = true;
+  cameraSelect.disabled = true;
+  document.getElementById('captureBtn').style.display = 'none';
+  document.getElementById('captureBtn').disabled = true;
+  document.getElementById('retakeBtn').style.display = 'none';
+  document.getElementById('saveBtn').style.display = 'none';
+  document.getElementById('preview').style.display = 'none';
+  setStatus('Starting camera...', 'info');
+  stopCamera();
+
+  try {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      throw new Error('Camera access is unavailable. Open the camera page in Chrome or Edge over HTTPS.');
+    }
+    // Load the background model while the browser opens the camera.
+    const backgroundPreparation = preparePhotoBackground();
+    void backgroundPreparation.catch(function() {});
+    const videoSettings = { width: { ideal: 1280 }, height: { ideal: 720 } };
+    if (selectedDeviceId) videoSettings.deviceId = { exact: selectedDeviceId };
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: videoSettings, audio: false });
+    } catch (error) {
+      // A disconnected or reset remembered device must not block other cameras.
+      if (!selectedDeviceId || !['OverconstrainedError', 'NotFoundError', 'DevicesNotFoundError'].includes(error.name)) throw error;
+      rememberCamera('');
+      delete videoSettings.deviceId;
+      stream = await navigator.mediaDevices.getUserMedia({ video: videoSettings, audio: false });
+    }
+    if (closed) { stopCamera(); return; }
+
+    const video = document.getElementById('video');
+    video.srcObject = stream;
+    video.style.display = 'block';
+    await video.play();
+    await waitForVideoFrame(video);
+
+    // Device labels become available after camera permission is granted.
+    try { await populateCameras(); } catch (error) {
+      console.warn('The camera list could not be refreshed: ' + error.message);
+    }
+    document.getElementById('placeholder').style.display = 'none';
+    document.getElementById('captureBtn').style.display = 'inline-block';
+    enableBtn.style.display = 'none';
+    const track = stream.getVideoTracks()[0];
+    rememberCamera(track.getSettings().deviceId || '');
+    track.addEventListener('ended', function() {
+      if (closed || !stream || stream.getVideoTracks()[0] !== track) return;
+      stopCamera();
+      document.getElementById('enableBtn').style.display = 'inline-block';
+      document.getElementById('captureBtn').style.display = 'none';
+      document.getElementById('placeholder').style.display = 'block';
+      showCameraError('The camera disconnected. Reconnect it or choose another camera.');
+    }, { once: true });
+    setStatus('Preparing white background. The first load may take a moment...', 'info');
+    await backgroundPreparation;
+    if (closed || !stream) return;
+    await startWhitePhotoPreview(stream);
+  } catch (error) {
+    if (closed) return;
+    stopCamera();
+    enableBtn.style.display = 'inline-block';
+    document.getElementById('captureBtn').style.display = 'none';
+    document.getElementById('placeholder').style.display = 'block';
+    showCameraError(getCameraErrorMessage(error));
+  } finally {
+    starting = false;
+    enableBtn.disabled = false;
+    document.getElementById('captureBtn').disabled = !previewReady || processing || saving;
+    cameraSelect.disabled = processing || saving || cameraSelect.options.length < 2;
+  }
+}
+
+function waitForVideoFrame(video) {
+  return new Promise(function(resolve, reject) {
+    function ready() {
+      return video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0;
+    }
+    if (ready()) { resolve(); return; }
+    const timeout = setTimeout(function() {
+      cleanup();
+      reject(new Error('The camera has not produced a frame. Reconnect it and click Enable Camera again.'));
+    }, 12000);
+    function cleanup() {
+      clearTimeout(timeout);
+      video.removeEventListener('loadeddata', check);
+      video.removeEventListener('canplay', check);
+      video.removeEventListener('resize', check);
+    }
+    function check() {
+      if (ready()) { cleanup(); resolve(); }
+    }
+    video.addEventListener('loadeddata', check);
+    video.addEventListener('canplay', check);
+    video.addEventListener('resize', check);
+    check();
+  });
+}
+
+async function populateCameras() {
+  const devices = await navigator.mediaDevices.enumerateDevices();
+  const select = document.getElementById('cameraSelect');
+  const selectedTrack = stream && stream.getVideoTracks()[0];
+  const selectedId = selectedTrack ? selectedTrack.getSettings().deviceId : select.value;
+  select.replaceChildren();
+  const cameras = devices.filter(function(device) { return device.kind === 'videoinput'; });
+  cameras.forEach(function(device, index) {
+    const option = document.createElement('option');
+    option.value = device.deviceId;
+    option.textContent = device.label || 'Camera ' + (index + 1);
+    select.appendChild(option);
+  });
+  if (cameras.some(function(device) { return device.deviceId === selectedId; })) {
+    select.value = selectedId;
+  }
+  select.disabled = cameras.length < 2;
+}
+
+function jpegByteLength(dataUrl) {
+  if (!/^data:image\/jpeg;base64,/.test(dataUrl)) throw new Error('The browser could not create a JPEG photo.');
+  const data = dataUrl.slice(dataUrl.indexOf(',') + 1);
+  return data.length * 3 / 4 - (data.endsWith('==') ? 2 : data.endsWith('=') ? 1 : 0);
+}
+
+async function capturePhoto() {
+  if (starting || saving || processing || closed) return;
+  const video = document.getElementById('video');
+  if (!stream || !previewReady || video.readyState < 2 || !video.videoWidth || !video.videoHeight) {
+    setStatus('Wait for the white background preview, then take the photo again.', 'warning');
+    return;
+  }
+  processing = true;
+  const generation = ++captureGeneration;
+  document.getElementById('captureBtn').disabled = true;
+  document.getElementById('cameraSelect').disabled = true;
+  setStatus('Preparing your photo with a white background...', 'info');
+  try {
+    const source = cropPhotoSquare(video, PHOTO_CAPTURE.maxEdge);
+    // Freeze the full-size photo, then release the webcam before processing it.
+    stopCamera(true);
+    const white = await applyWhitePhotoBackground(source);
+    if (closed || generation !== captureGeneration) return;
+    const canvas = document.getElementById('canvas');
+    canvas.width = white.width;
+    canvas.height = white.height;
+    canvas.getContext('2d').drawImage(white, 0, 0);
+
+    // Resize the actual pixels BEFORE encoding/sending, for laptop and USB cameras.
+    let encoded = '';
+    for (const quality of [0.85, 0.75, 0.65, 0.55]) {
+      encoded = canvas.toDataURL('image/jpeg', quality);
+      if (jpegByteLength(encoded) <= PHOTO_CAPTURE.maxBytes) break;
+    }
+    if (jpegByteLength(encoded) > PHOTO_CAPTURE.maxBytes) {
+      throw new Error('The photo is still too large to save. Retake it using a lower camera resolution.');
+    }
+    capturedImage = encoded;
+    const preview = document.getElementById('preview');
+    document.getElementById('saveBtn').disabled = false;
+    document.getElementById('retakeBtn').disabled = false;
+    preview.src = capturedImage;
+    preview.style.display = 'block';
+    video.style.display = 'none';
+    document.getElementById('livePreview').style.display = 'none';
+    document.getElementById('captureBtn').style.display = 'none';
+    document.getElementById('retakeBtn').style.display = 'inline-block';
+    document.getElementById('saveBtn').style.display = 'inline-block';
+    document.getElementById('cameraSelect').disabled = true;
+    setStatus('Photo captured with white background. Review it, then click "Save Photo".', 'success');
+  } catch (error) {
+    if (closed || generation !== captureGeneration) return;
+    capturedImage = null;
+    stopCamera();
+    document.getElementById('captureBtn').style.display = 'none';
+    document.getElementById('saveBtn').style.display = 'none';
+    document.getElementById('preview').style.display = 'none';
+    document.getElementById('placeholder').style.display = 'block';
+    document.getElementById('enableBtn').style.display = 'inline-block';
+    setStatus(error.message, 'error');
+  } finally {
+    if (generation === captureGeneration) processing = false;
+    if (!closed) document.getElementById('cameraSelect').disabled = saving || !!capturedImage || document.getElementById('cameraSelect').options.length < 2;
+  }
+}
+
+async function retakePhoto() {
+  if (saving || processing || closed) return;
+  await enableCamera();
+}
+
+function savePhoto() {
+  if (saving || processing || closed) return;
+  let form;
+  try {
+    const endpoint = validateDestination();
+    if (!capturedImage) throw new Error('Take a photo before saving.');
+    if (jpegByteLength(capturedImage) > PHOTO_CAPTURE.maxBytes) {
+      throw new Error('The photo is too large. Retake it before saving.');
+    }
+    saving = true;
+    ['saveBtn', 'retakeBtn', 'cancelBtn', 'cameraSelect'].forEach(function(id) {
+      document.getElementById(id).disabled = true;
+    });
+    document.getElementById('loading').style.display = 'block';
+    setStatus('Saving photo. Keep this tab open until confirmation.', 'info');
+    form = document.createElement('form');
+    form.method = 'POST';
+    form.action = endpoint;
+    pendingRequest = Array.from(crypto.getRandomValues(new Uint8Array(16)), function(b) {
+      return b.toString(16).padStart(2, '0');
+    }).join('');
+    if (saveFrame) saveFrame.remove();
+    saveFrame = document.createElement('iframe');
+    saveFrame.name = 'tiponSave_' + pendingRequest;
+    saveFrame.title = 'Photo save result';
+    saveFrame.style.display = 'none';
+    document.body.appendChild(saveFrame);
+    form.target = saveFrame.name;
+    form.enctype = 'application/x-www-form-urlencoded';
+    form.style.display = 'none';
+    const fields = { base64Data: capturedImage, spreadsheetId, sheetName, applicantName, cameraSession, cameraRequestId: pendingRequest };
+    Object.keys(fields).forEach(function(name) {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = name;
+      input.value = fields[name];
+      form.appendChild(input);
+    });
+    document.body.appendChild(form);
+    // An iframe load is NOT confirmation: wait for the matching server message.
+    resultTimer = setTimeout(function() {
+      document.getElementById('loading').style.display = 'none';
+      saveFrame.style.display = 'block';
+      saveFrame.style.width = '100%';
+      saveFrame.style.height = '400px';
+      setStatus('Still waiting for save confirmation. Check the result below and the applicant form. Do not submit the photo again while this save is pending.', 'warning');
+    }, 15000);
+    form.submit();
+  } catch (error) {
+    if (form) form.remove();
+    clearTimeout(resultTimer);
+    pendingRequest = "";
+    saving = false;
+    ['saveBtn', 'retakeBtn', 'cancelBtn'].forEach(function(id) {
+      document.getElementById(id).disabled = false;
+    });
+    document.getElementById('loading').style.display = 'none';
+    setStatus(error.message, 'error');
+  }
+}
+
+function stopCamera(keepPreview = false) {
+  pauseWhitePhotoPreview();
+  if (stream) stream.getTracks().forEach(function(track) { track.stop(); });
+  stream = null;
+  const video = document.getElementById('video');
+  video.srcObject = null;
+  video.style.display = 'none';
+  if (!keepPreview) document.getElementById('livePreview').style.display = 'none';
+}
+
+function getCameraErrorMessage(error) {
+  switch (error && error.name) {
+    case 'NotAllowedError':
+    case 'PermissionDeniedError':
+      return 'Allow camera access for this page in your browser, then try again.';
+    case 'NotFoundError':
+    case 'DevicesNotFoundError':
+      return 'The selected camera is unavailable. Reconnect the USB camera or choose another camera.';
+    case 'NotReadableError':
+    case 'TrackStartError':
+      return 'The camera could not start. Close other apps using it, then try again.';
+    case 'OverconstrainedError':
+      return 'The selected camera is unavailable or does not support the requested settings. Reconnect it or choose another camera.';
+    default:
+      return error && error.message ? error.message : 'The camera could not start.';
+  }
+}
+
+function showCameraError(message) {
+  setStatus(message, 'error');
+  document.getElementById('helpBox').style.display = 'block';
+  document.getElementById('errorCode').textContent = message;
+}
+
+function hideHelp() {
+  document.getElementById('helpBox').style.display = 'none';
+}
+
+function setStatus(message, type) {
+  const status = document.getElementById('status');
+  status.textContent = message;
+  status.className = 'status ' + (type || 'info');
+}
+
+function cancelPage() {
+  if (saving) return;
+  closed = true;
+  captureGeneration++;
+  stopCamera();
+  disposePhotoBackground();
+  window.close();
+  setStatus('The camera is closed. You may close this tab and return to the applicant form.', 'info');
+}
+
+window.addEventListener('pagehide', function() {
+  closed = true;
+  captureGeneration++;
+  stopCamera();
+  disposePhotoBackground();
+});
+window.addEventListener('pageshow', function(event) {
+  if (!event.persisted) return;
+  closed = false;
+  starting = false;
+  processing = false;
+  saving = false;
+  document.getElementById('loading').style.display = 'none';
+  ['saveBtn', 'retakeBtn', 'cancelBtn'].forEach(function(id) {
+    document.getElementById(id).disabled = false;
+  });
+  if (!capturedImage) document.getElementById('enableBtn').style.display = 'inline-block';
+  setStatus('Check the applicant form before saving this photo again. Use Retake for a new photo.', 'warning');
+});
+
+</script>
+</body>
+</html>
