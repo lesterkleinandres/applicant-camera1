@@ -775,9 +775,7 @@ function validateDestination() {
   try { endpoint = new URL(appsScriptUrl); } catch (error) {
     throw new Error('The camera save address is invalid. Reopen the camera from the applicant form.');
   }
-  if (endpoint.protocol !== 'https:' || endpoint.hostname !== 'script.google.com' ||
-      !/^\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(endpoint.pathname) ||
-      endpoint.username || endpoint.password || endpoint.port || endpoint.search || endpoint.hash) {
+  if (endpoint.href !== 'https://script.google.com/a/macros/tipon.coop/s/AKfycbx54YUsZdT8Sc8wnbZ_f8Hw2dkQeyOXCtAJolrJ1s32vnJgMIXzW4ZeuidtC_XfZ9bU/exec') {
     throw new Error('The camera save address is invalid. Reopen the camera from the applicant form.');
   }
   return endpoint.href;
